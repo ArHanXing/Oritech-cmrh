@@ -1,0 +1,69 @@
+name: pages
+
+# Validates the reactor planner and publishes it to GitHub Pages.
+on:
+  push:
+    branches:
+      - "1.21"
+    tags-ignore:
+      - "**"
+    paths:
+      - "tools/reactor-planner/**"
+      - "src/main/java/rearth/oritech/block/entity/reactor/**"
+      - "src/main/java/rearth/oritech/block/blocks/reactor/**"
+      - "src/main/java/rearth/oritech/init/OritechConfig.java"
+      - ".github/workflows/pages.yml"
+  pull_request:
+    branches:
+      - "1.21"
+    paths:
+      - "tools/reactor-planner/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# only one deployment at a time, but let a running build finish
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: run planner self-test
+        run: node tools/reactor-planner/selftest.mjs
+
+      - name: configure pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v5
+
+      - name: upload planner as the site
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: tools/reactor-planner
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: deploy to github pages
+        id: deployment
+        uses: actions/deploy-pages@v4

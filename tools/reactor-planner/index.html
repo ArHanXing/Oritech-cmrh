@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oritech 裂变反应堆规划器</title>
+<style>
+  :root {
+    --bg: #14161a;
+    --panel: #1c1f25;
+    --panel-2: #23272f;
+    --line: #333944;
+    --text: #d8dbe2;
+    --dim: #8b93a1;
+    --accent: #4cc2ff;
+    --good: #55d17a;
+    --warn: #e3b341;
+    --bad: #e5533d;
+    --crit: #a01f0f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 13px/1.5 "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif;
+  }
+  header {
+    padding: 14px 18px; border-bottom: 1px solid var(--line); background: var(--panel);
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  header h1 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: .2px; }
+  header .sub { color: var(--dim); font-size: 12px; }
+  .wrap { display: flex; gap: 16px; padding: 16px; align-items: flex-start; flex-wrap: wrap; }
+  .col { display: flex; flex-direction: column; gap: 14px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px;
+  }
+  .card h2 {
+    margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: .8px;
+    color: var(--dim); font-weight: 600;
+  }
+  .grid-host { display: inline-block; }
+  table.grid { border-collapse: collapse; user-select: none; }
+  table.grid td {
+    width: 30px; height: 30px; border: 1px solid #2b303a; text-align: center;
+    font-size: 14px; cursor: pointer; background: #171a1f; position: relative;
+    transition: background .08s;
+  }
+  table.grid td:hover { outline: 1px solid var(--accent); outline-offset: -1px; }
+  table.grid td.heat-cold { background: #1b2b33; }
+  table.grid td.heat-warm { background: #3a3320; }
+  table.grid td.heat-hot  { background: #4d2a1c; }
+  table.grid td.heat-crit { background: #6b1a12; }
+  .palette { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .palette button, .btn {
+    background: var(--panel-2); color: var(--text); border: 1px solid var(--line);
+    border-radius: 6px; padding: 5px 9px; cursor: pointer; font-size: 12px; font-family: inherit;
+  }
+  .palette button:hover, .btn:hover { border-color: var(--accent); }
+  .palette button.sel { border-color: var(--accent); background: #24333d; box-shadow: inset 0 0 0 1px var(--accent); }
+  .btn.primary { border-color: var(--accent); color: #dff3ff; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+  .row:last-child { margin-bottom: 0; }
+  label.chk { display: flex; gap: 5px; align-items: center; color: var(--dim); }
+  .metrics { display: grid; grid-template-columns: 1fr auto; gap: 3px 12px; }
+  .metrics .k { color: var(--dim); }
+  .metrics .v { text-align: right; font-variant-numeric: tabular-nums; }
+  .v.good { color: var(--good); } .v.warn { color: var(--warn); }
+  .v.bad { color: var(--bad); } .v.crit { color: var(--crit); font-weight: 700; }
+  .status {
+    margin: 8px 0 0; padding: 7px 10px; border-radius: 6px; text-align: center;
+    font-weight: 600; border: 1px solid var(--line); background: var(--panel-2);
+  }
+  .status.good { border-color: var(--good); color: var(--good); }
+  .status.warn { border-color: var(--warn); color: var(--warn); }
+  .status.bad { border-color: var(--bad); color: var(--bad); }
+  .status.crit { border-color: var(--crit); color: #ff8a72; background: #33130e; }
+  canvas { width: 100%; height: 130px; display: block; background: #14171c; border-radius: 6px; }
+  .legend { display: flex; gap: 14px; color: var(--dim); font-size: 11px; margin-top: 6px; }
+  .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 4px; }
+  .note { color: var(--dim); font-size: 11.5px; }
+  .note code { background: #14171c; padding: 1px 4px; border-radius: 3px; }
+  .warnbox {
+    border: 1px solid var(--warn); color: #f0d186; background: #2a2415;
+    border-radius: 6px; padding: 7px 9px; font-size: 12px; margin-top: 8px;
+  }
+  .warnbox:empty { display: none; }
+  .cfg { display: grid; grid-template-columns: 1fr 74px; gap: 6px 10px; align-items: center; }
+  .cfg input, .cfg select {
+    background: #14171c; border: 1px solid var(--line); color: var(--text);
+    border-radius: 5px; padding: 4px 6px; font: inherit; width: 100%;
+  }
+  .hover-info { min-height: 54px; }
+  kbd {
+    background: #14171c; border: 1px solid var(--line); border-bottom-width: 2px;
+    border-radius: 4px; padding: 0 4px; font-size: 11px;
+  }
+  a { color: var(--accent); }
+  .split { display: flex; gap: 16px; flex-wrap: wrap; }
+  .split > * { flex: 1 1 260px; min-width: 0; }
+  .heatbar { height: 8px; border-radius: 4px; background: #14171c; border: 1px solid var(--line); overflow: hidden; margin-top: 6px; }
+  .heatbar > div { height: 100%; width: 0%; background: linear-gradient(90deg, #55d17a, #e3b341, #e5533d); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Oritech 裂变反应堆规划器</h1>
+  <span class="sub">单层布局 &times; 堆叠高度 &middot; 复刻游戏内的逐刻逻辑</span>
+</header>
+
+<div class="wrap">
+
+  <!-- ============ editor ============ -->
+  <div class="col">
+    <div class="card">
+      <h2>内部布局（单层）</h2>
+      <div class="palette" id="palette"></div>
+      <div class="grid-host"><table class="grid" id="grid"></table></div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="btnClear">清空</button>
+        <button class="btn" id="btnFillVent">填满散热口</button>
+        <span class="note">按住拖拽即可绘制 &middot; <kbd>右键</kbd>或选“空”可擦除</span>
+      </div>
+      <div class="row">
+        <label class="chk">网格
+          <select id="gridSize">
+            <option>5</option><option>7</option><option>9</option>
+            <option selected>11</option><option>13</option><option>15</option>
+          </select>
+        </label>
+        <label class="chk">预设
+          <select id="preset">
+            <option value="">&mdash;</option>
+            <option value="single">单联棒 + 散热口</option>
+            <option value="double">双联棒 + 热量管道</option>
+            <option value="quad">四联棒 + 重度冷却</option>
+            <option value="absorber">吸收器环</option>
+            <option value="recovery">回收口环</option>
+          </select>
+        </label>
+        <label class="chk"><input type="checkbox" id="showNumbers" checked> 显示热量</label>
+      </div>
+      <div id="validation"></div>
+    </div>
+
+    <div class="card">
+      <h2>悬停查看单元格</h2>
+      <div class="hover-info note" id="hoverInfo">把鼠标移到网格上即可查看详情。</div>
+    </div>
+  </div>
+
+  <!-- ============ simulation ============ -->
+  <div class="col" style="flex:1 1 380px; min-width:340px">
+    <div class="card">
+      <h2>控制</h2>
+      <div class="row">
+        <button class="btn primary" id="btnRun">&#9654; 开始</button>
+        <button class="btn" id="btnStep">单步 1 刻</button>
+        <button class="btn" id="btnStep100">+100 刻</button>
+        <button class="btn" id="btnReset">重置热量</button>
+        <button class="btn" id="btnSettle">运行至稳态</button>
+      </div>
+      <div class="row">
+        <label class="chk">速度
+          <select id="speed">
+            <option value="1">1 刻/秒</option>
+            <option value="5">5 刻/秒</option>
+            <option value="20" selected>20 刻/秒</option>
+            <option value="100">100 刻/秒</option>
+            <option value="1000">1000 刻/秒</option>
+          </select>
+        </label>
+        <span class="note" id="tickLabel">第 0 刻</span>
+      </div>
+      <div class="status" id="status">空闲</div>
+      <div class="heatbar"><div id="heatbar"></div></div>
+    </div>
+
+    <div class="card">
+      <h2>实时指标</h2>
+      <div class="metrics" id="metrics"></div>
+    </div>
+
+    <div class="card">
+      <h2>历史曲线</h2>
+      <canvas id="chart" width="640" height="260"></canvas>
+      <div class="legend">
+        <span><i style="background:#4cc2ff"></i>RF/刻</span>
+        <span><i style="background:#e5533d"></i>最热温度 K</span>
+        <span><i style="background:#e3b341"></i>净热量 K/刻</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>反应堆参数（配置默认值）</h2>
+      <div class="cfg">
+        <label for="cfgHeight">堆叠高度（层）</label>
+        <input id="cfgHeight" type="number" min="1" max="64" value="1">
+        <label for="cfgSlope">heatHeightSlope</label>
+        <input id="cfgSlope" type="number" min="0" max="10" step="0.05" value="0">
+        <label for="cfgMaxHeat">maxHeat（熔毁）</label>
+        <input id="cfgMaxHeat" type="number" min="1" value="2000">
+        <label for="cfgWarning">警告阈值</label>
+        <input id="cfgWarning" type="number" min="0" value="1600">
+        <label for="cfgRf">rfPerPulse</label>
+        <input id="cfgRf" type="number" min="0" value="64">
+        <label for="cfgAbsorber">absorberRate</label>
+        <input id="cfgAbsorber" type="number" min="0" value="16">
+        <label for="cfgVentBase">ventBaseRate</label>
+        <input id="cfgVentBase" type="number" min="0" value="4">
+        <label for="cfgVentRel">ventRelativeRate</label>
+        <input id="cfgVentRel" type="number" min="1" value="100">
+        <label for="cfgRecovery">recoveryRate</label>
+        <input id="cfgRecovery" type="number" min="0" value="8">
+        <label for="cfgRfPerHeat">rfPerHeat</label>
+        <input id="cfgRfPerHeat" type="number" min="0" value="2">
+        <label for="cfgUnstable">maxUnstableTicks</label>
+        <input id="cfgUnstable" type="number" min="1" value="600">
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="btnCfgReset">恢复默认值</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ reference ============ -->
+  <div class="col" style="flex:1 1 300px; min-width:280px">
+    <div class="card">
+      <h2>公式（与模组完全一致）</h2>
+      <div class="note">
+        <p><code>heatHeightMult = 1 + (height - 1) * slope</code></p>
+        <p><b>每根燃料棒、每刻</b><br>
+        <code>脉冲 = 内部脉冲 + Σ 相邻燃料棒 + 每个相邻反射器加自身棒数</code><br>
+        <code>energy = rfPerPulse * pulses * height</code><br>
+        <code>heat = (pulses/2 * pulses + 4) * heatHeightMult</code></p>
+        <p><b>散热口</b> — 只作用于最热的那个邻居<br>
+        <code>removed = min(h/ventRelativeRate + ventBaseRate, h)</code></p>
+        <p><b>热量吸收器</b> — 作用于每个邻居，需要冷却剂<br>
+        <code>h -= absorberRate</code> （未做下限钳制：过度冷却会变成负数）</p>
+        <p><b>热回收口</b> — 作用于每个邻居，无需冷却剂<br>
+        <code>removed = min(recoveryRate, h)</code><br>
+        <code>energy += removed * rfPerHeat * height</code></p>
+        <p><b>热量管道</b> — 均衡温度，不销毁热量<br>
+        <code>gained = min((h - pipe)/4 + 10, h - pipe)</code></p>
+        <p><b>熔毁</b><br>
+        <code>最热 / heatHeightMult &gt; maxHeat</code> 持续 <code>maxUnstableTicks</code> 刻</p>
+        <p class="note">所有除法均为整数除法，与 Java 代码完全一致。</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>这个模拟有多还原？</h2>
+      <div class="note">
+        <p>这里的每刻处理顺序是固定的：燃料棒 &rarr; 热量管道 &rarr; 吸收器 &rarr; 散热口 &rarr; 回收口。
+        而游戏遍历的是 <code>HashMap</code>，因此同一刻内各组件的处理顺序并不固定，结果每刻可能相差几点 K。
+        稳态数值是一致的；请把它当作设计工具，而不是逐位精确的复刻。</p>
+        <p>运行时假设燃料与冷却剂无限供应：每个燃料口都是满的、每个吸收器都有冷却剂，
+        这对应一个供应充足的反应堆。</p>
+        <p>每层内部结构完全相同（游戏本身也这样要求）。能量、燃料与冷却剂消耗都随堆叠高度缩放，
+        散热则不随高度缩放。</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>方块对照</h2>
+      <div class="note" id="blockRef"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------ *
+ * Block definitions. `rodCount` / `internalPulses` mirror ReactorRodBlock,
+ * all other numbers are the config defaults used by the controller.
+ * ------------------------------------------------------------------ */
+const BLOCKS = {
+  empty:    { name: "空",                glyph: "&middot;", color: "#171a1f" },
+  single:   { name: "单联燃料棒",         glyph: "&#9679;", color: "#c96a3a", rodCount: 1, internalPulses: 1 },
+  double:   { name: "双联燃料棒",         glyph: "&#9679;&#9679;", color: "#d07a30", rodCount: 2, internalPulses: 4 },
+  quad:     { name: "四联燃料棒",         glyph: "&#9632;", color: "#e08a24", rodCount: 4, internalPulses: 12 },
+  reflector:{ name: "中子反射器",         glyph: "&#9675;", color: "#3f8fd0", reflector: true },
+  pipe:     { name: "热量管道",           glyph: "&#10022;", color: "#7d6bd6", pipe: true },
+  vent:     { name: "散热口",             glyph: "&#9650;", color: "#48a9a6", vent: true },
+  absorber: { name: "热量吸收器",         glyph: "&#10006;", color: "#5f9de0", absorber: true },
+  recovery: { name: "热回收口",           glyph: "&#9670;", color: "#d9b53c", recovery: true }
+};
+
+const DEFAULTS = {
+  height: 1, slope: 0, maxHeat: 2000, warning: 1600, rfPerPulse: 64,
+  absorberRate: 16, ventBaseRate: 4, ventRelativeRate: 100,
+  recoveryRate: 8, rfPerHeat: 2, maxUnstableTicks: 600
+};
+
+const cfg = Object.assign({}, DEFAULTS);
+
+/* ------------------------------------------------------------------ *
+ * State
+ * ------------------------------------------------------------------ */
+let size = 11;
+let cells = [];        // type keys
+let heats = [];        // per-cell temperature (int)
+let tool = "single";
+let heatHistory = [];  // hottest K per sampled tick
+let rfHistory = [];
+let netHistory = [];
+let tick = 0;
+let unstableTicks = 0;
+let last = null;       // last tick metrics
+let timer = null;
+let dead = false;      // set after a meltdown, cleared on reset
+
+const idx = (x, z) => z * size + x;
+const idiv = (a, b) => Math.trunc(a / b);          // Java int division
+
+/* ------------------------------------------------------------------ *
+ * Grid helpers
+ * ------------------------------------------------------------------ */
+function inBounds(x, z) { return x >= 0 && z >= 0 && x < size && z < size; }
+
+function neighbours(x, z) {
+  const out = [];
+  if (inBounds(x - 1, z)) out.push([x - 1, z]);
+  if (inBounds(x + 1, z)) out.push([x + 1, z]);
+  if (inBounds(x, z - 1)) out.push([x, z - 1]);
+  if (inBounds(x, z + 1)) out.push([x, z + 1]);
+  return out;
+}
+
+/** Only non-empty cells exist as components, so empty cells break adjacency. */
+function isComponent(x, z) { return cells[idx(x, z)] !== "empty"; }
+
+function activeNeighbours(x, z) {
+  return neighbours(x, z).filter(([nx, nz]) => isComponent(nx, nz));
+}
+
+function heatHeightMult() { return Math.max(0.01, 1 + (cfg.height - 1) * cfg.slope); }
+
+/* ------------------------------------------------------------------ *
+ * One simulation tick, mirroring ReactorControllerBlockEntity.serverTick
+ * ------------------------------------------------------------------ */
+function simulateTick() {
+  if (dead) return last;
+  const mult = heatHeightMult();
+  let activeRods = 0, totalRods = 0;
+  let heatProduced = 0, heatRemoved = 0, energyProduced = 0, energyFromRecovery = 0;
+  const diffs = new Array(size * size).fill(0);
+
+  // --- rods ---
+  for (let z = 0; z < size; z++) for (let x = 0; x < size; x++) {
+    const def = BLOCKS[cells[idx(x, z)]];
+    if (!def.rodCount) continue;
+    totalRods++;
+
+    let pulses = def.internalPulses;
+    for (const [nx, nz] of activeNeighbours(x, z)) {
+      const nd = BLOCKS[cells[idx(nx, nz)]];
+      if (nd.rodCount) pulses += nd.rodCount;                 // neighbour rod
+      else if (nd.reflector) pulses += def.rodCount;          // bounced pulse
+    }
+
+    activeRods++;
+    energyProduced += cfg.rfPerPulse * pulses * cfg.height;
+    const heatCreated = Math.trunc((idiv(pulses, 2) * pulses + 4) * mult);
+    heats[idx(x, z)] += heatCreated;
+    diffs[idx(x, z)] += heatCreated;
+    heatProduced += heatCreated;
+  }
+
+  // --- heat pipes ---
+  for (let z = 0; z < size; z++) for (let x = 0; x < size; x++) {
+    if (!BLOCKS[cells[idx(x, z)]].pipe) continue;
+    const self = idx(x, z);
+    for (const [nx, nz] of activeNeighbours(x, z)) {
+      const n = idx(nx, nz);
+      if (heats[n] <= heats[self]) continue;
+      const diff = heats[n] - heats[self];
+      const gained = Math.min(idiv(diff, 4) + 10, diff);
+      heats[n] -= gained;
+      heats[self] += gained;
+      diffs[n] -= gained;
+      diffs[self] += gained;
+    }
+  }
+
+  // --- absorbers ---
+  for (let z = 0; z < size; z++) for (let x = 0; x < size; x++) {
+    if (!BLOCKS[cells[idx(x, z)]].absorber) continue;
+    let sum = 0;
+    for (const [nx, nz] of activeNeighbours(x, z)) {
+      const n = idx(nx, nz);
+      if (heats[n] <= 0) continue;
+      heats[n] -= cfg.absorberRate;      // intentionally not clamped (game behaviour)
+      diffs[n] -= cfg.absorberRate;
+      sum += cfg.absorberRate;
+    }
+    heatRemoved += sum;
+    diffs[idx(x, z)] = 0;
+  }
+
+  // --- vents (hottest neighbour only) ---
+  for (let z = 0; z < size; z++) for (let x = 0; x < size; x++) {
+    if (!BLOCKS[cells[idx(x, z)]].vent) continue;
+    let hottest = -1, max = 0;
+    for (const [nx, nz] of activeNeighbours(x, z)) {
+      const n = idx(nx, nz);
+      if (heats[n] <= max) continue;
+      hottest = n; max = heats[n];
+    }
+    if (max !== 0 && hottest >= 0) {
+      const removed = Math.min(idiv(max, cfg.ventRelativeRate) + cfg.ventBaseRate, max);
+      heats[hottest] -= removed;
+      diffs[hottest] -= removed;
+      heatRemoved += removed;
+    }
+  }
+
+  // --- recovery ports ---
+  for (let z = 0; z < size; z++) for (let x = 0; x < size; x++) {
+    if (!BLOCKS[cells[idx(x, z)]].recovery) continue;
+    let sum = 0;
+    for (const [nx, nz] of activeNeighbours(x, z)) {
+      const n = idx(nx, nz);
+      if (heats[n] <= 0) continue;
+      const removed = Math.min(cfg.recoveryRate, heats[n]);
+      heats[n] -= removed;
+      diffs[n] -= removed;
+      sum += removed;
+    }
+    if (sum > 0) {
+      const recovered = sum * cfg.rfPerHeat * cfg.height;
+      energyProduced += recovered;
+      energyFromRecovery += recovered;
+    }
+    heatRemoved += sum;
+    diffs[idx(x, z)] = 0;
+  }
+
+  // --- global values ---
+  let hottest = 0;
+  for (let i = 0; i < heats.length; i++) if (heats[i] > hottest) hottest = heats[i];
+  const normalized = Math.trunc(hottest / mult);
+
+  if (activeRods > 0 && normalized > cfg.maxHeat) {
+    unstableTicks++;
+    if (unstableTicks > cfg.maxUnstableTicks) meltdown();
+  } else {
+    unstableTicks = 0;
+  }
+
+  tick++;
+  last = {
+    activeRods, totalRods, heatProduced, heatRemoved,
+    netHeat: heatProduced - heatRemoved,
+    energyProduced, energyFromRecovery, hottest, normalized, diffs,
+    mult, overload: normalized > cfg.maxHeat
+  };
+  return last;
+}
+
+function meltdown() {
+  stop();
+  dead = true;
+  for (let i = 0; i < heats.length; i++) heats[i] = 0;
+  unstableTicks = 0;
+}
+
+/* ------------------------------------------------------------------ *
+ * Trend + prediction (mirrors the Jade panel)
+ * ------------------------------------------------------------------ */
+function heatTrend() {
+  const n = heatHistory.length;
+  if (n < 2) return 0;
+  const window = Math.min(100, n);
+  const a = heatHistory[n - window], b = heatHistory[n - 1];
+  return (b - a) / (window - 1);
+}
+
+function ticksUntilMeltdown() {
+  const trend = heatTrend();
+  if (trend <= 0.01 || !last) return -1;
+  const headroom = cfg.maxHeat - last.normalized;
+  if (headroom <= 0) return 0;
+  return Math.ceil(headroom / trend);
+}
+
+/* ------------------------------------------------------------------ *
+ * UI: palette
+ * ------------------------------------------------------------------ */
+const paletteHost = document.getElementById("palette");
+for (const key of Object.keys(BLOCKS)) {
+  const b = document.createElement("button");
+  b.textContent = BLOCKS[key].name;
+  b.dataset.tool = key;
+  b.className = key === tool ? "sel" : "";
+  b.onclick = () => {
+    tool = key;
+    for (const el of paletteHost.children) el.className = el.dataset.tool === tool ? "sel" : "";
+  };
+  paletteHost.appendChild(b);
+}
+
+/* ------------------------------------------------------------------ *
+ * UI: grid
+ * ------------------------------------------------------------------ */
+const gridEl = document.getElementById("grid");
+
+function buildGrid() {
+  cells = new Array(size * size).fill("empty");
+  heats = new Array(size * size).fill(0);
+  gridEl.innerHTML = "";
+  for (let z = 0; z < size; z++) {
+    const tr = document.createElement("tr");
+    for (let x = 0; x < size; x++) {
+      const td = document.createElement("td");
+      td.dataset.x = x; td.dataset.z = z;
+      tr.appendChild(td);
+    }
+    gridEl.appendChild(tr);
+  }
+}
+
+let painting = false;
+function paintAt(td, erase) {
+  if (!td) return;
+  const x = +td.dataset.x, z = +td.dataset.z, i = idx(x, z);
+  const next = erase ? "empty" : tool;
+  if (cells[i] !== next) {
+    cells[i] = next;
+    heats[i] = 0;          // a replaced component starts cold, like a newly placed block
+    renderGrid();
+  }
+}
+
+gridEl.addEventListener("mousedown", e => {
+  if (e.target.tagName !== "TD") return;
+  painting = true;
+  paintAt(e.target, e.button === 2);
+  e.preventDefault();
+});
+gridEl.addEventListener("mouseover", e => {
+  if (e.target.tagName === "TD") {
+    if (painting) paintAt(e.target, e.buttons === 2);
+    showHover(e.target);
+  }
+});
+window.addEventListener("mouseup", () => { painting = false; });
+gridEl.addEventListener("contextmenu", e => e.preventDefault());
+
+/* ------------------------------------------------------------------ *
+ * UI: rendering
+ * ------------------------------------------------------------------ */
+function heatClass(h) {
+  if (!last || !last.mult) return h <= 0 ? "" : "heat-cold";
+  const n = h / last.mult;
+  if (n >= cfg.maxHeat * 0.9) return "heat-crit";
+  if (n >= cfg.warning) return "heat-hot";
+  if (n > 0) return "heat-warm";
+  return "";
+}
+
+function renderGrid() {
+  const show = document.getElementById("showNumbers").checked;
+  for (const tr of gridEl.rows) {
+    for (const td of tr.cells) {
+      const i = idx(+td.dataset.x, +td.dataset.z);
+      const key = cells[i];
+      const def = BLOCKS[key];
+      td.style.background = key === "empty" ? "" : def.color + "55";
+      td.className = key === "empty" ? "" : heatClass(heats[i]);
+      td.innerHTML = key === "empty"
+        ? ""
+        : (show ? heats[i] : def.glyph);
+      td.title = def.name + (key === "empty" ? "" : " - " + heats[i] + " K");
+    }
+  }
+}
+
+function setStatus(text, cls) {
+  const el = document.getElementById("status");
+  el.textContent = text;
+  el.className = "status" + (cls ? " " + cls : "");
+}
+
+function renderMetrics() {
+  const host = document.getElementById("metrics");
+  if (!last) { host.innerHTML = '<span class="k">点击“开始”运行模拟</span><span></span>'; return; }
+  const rows = [];
+  const add = (k, v, cls) => rows.push(`<span class="k">${k}</span><span class="v ${cls || ""}">${v}</span>`);
+
+  add("燃料棒", last.activeRods + " / " + last.totalRods + " 工作中");
+  add("产能", fmt(last.energyProduced) + " RF/刻");
+  if (last.energyFromRecovery > 0)
+    add("&#8627; 其中回收", fmt(last.energyFromRecovery) + " RF/刻（"
+      + pct(last.energyFromRecovery, last.energyProduced) + ")");
+  add("产热", "+" + fmt(last.heatProduced) + " K/刻");
+  add("散热", "-" + fmt(last.heatRemoved) + " K/刻");
+  add("净热量", (last.netHeat > 0 ? "+" : "") + fmt(last.netHeat) + " K/刻",
+      last.netHeat > 0 ? "bad" : "good");
+  add("最热部件", last.hottest + " K");
+  add("折算单层", last.normalized + " K（占熔毁上限 " + pct(last.normalized, cfg.maxHeat) + "）",
+      last.normalized >= cfg.maxHeat ? "crit" : last.normalized >= cfg.warning ? "bad" : "good");
+  add("heatHeightMult", last.mult.toFixed(2) + "x");
+  const trend = heatTrend();
+  add("5 秒趋势", (trend > 0 ? "+" : "") + trend.toFixed(2) + " K/刻",
+      trend > 0.01 ? "bad" : trend < -0.01 ? "good" : "");
+  const ttm = ticksUntilMeltdown();
+  add("预计熔毁", ttm < 0 ? "稳定" : (ttm / 20).toFixed(1) + " 秒",
+      ttm < 0 ? "good" : ttm < 200 ? "crit" : "bad");
+  if (unstableTicks > 0)
+    add("熔毁倒计时", ((cfg.maxUnstableTicks - unstableTicks) / 20).toFixed(1) + " 秒", "crit");
+
+  host.innerHTML = rows.join("");
+}
+
+const fmt = n => Math.round(n).toLocaleString();
+const pct = (a, b) => b <= 0 ? "0%" : Math.round(a * 100 / b) + "%";
+
+function renderStatus() {
+  if (dead) { setStatus("已熔毁 —— 反应堆在此处会爆炸", "crit"); return; }
+  if (!last) { setStatus("空闲"); return; }
+  const trend = heatTrend(), ttm = ticksUntilMeltdown();
+
+  if (last.normalized >= cfg.maxHeat) setStatus("正在熔毁", "crit");
+  else if (ttm >= 0 && ttm < 200) setStatus("危急 —— " + (ttm / 20).toFixed(1) + " 秒后熔毁", "crit");
+  else if (ttm >= 0) setStatus("升温中 —— " + (ttm / 20).toFixed(1) + " 秒后熔毁", "bad");
+  else if (last.hottest > cfg.warning) setStatus("已超过警告阈值", "warn");
+  else if (last.hottest <= 0 && trend <= 0.01) setStatus("空闲 / 没有燃料在燃烧");
+  else setStatus("稳定", "good");
+
+  document.getElementById("heatbar").style.width =
+    Math.min(100, last.normalized * 100 / cfg.maxHeat) + "%";
+  document.getElementById("tickLabel").textContent = "第 " + tick + " 刻";
+}
+
+/* ------------------------------------------------------------------ *
+ * Chart
+ * ------------------------------------------------------------------ */
+const chart = document.getElementById("chart");
+function renderChart() {
+  const ctx = chart.getContext("2d");
+  const W = chart.width, H = chart.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const N = 300;
+  const rf = rfHistory.slice(-N), hot = heatHistory.slice(-N), net = netHistory.slice(-N);
+  if (rf.length < 2) return;
+
+  const maxRf = Math.max(1, ...rf);
+  const maxHot = Math.max(cfg.maxHeat, ...hot);
+  const maxNet = Math.max(1, ...net.map(Math.abs));
+
+  const line = (arr, yOf, color) => {
+    ctx.beginPath();
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+    arr.forEach((v, i) => {
+      const x = (i / Math.max(1, arr.length - 1)) * W;
+      const y = yOf(v);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  };
+  const topDown = max => v => H - 6 - (v / max) * (H - 12);
+  const centred = max => v => H / 2 - (v / max) * (H / 2 - 6);
+
+  // warning + meltdown guides
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = "#5a4a1c"; ctx.beginPath();
+  ctx.moveTo(0, H - 6 - (cfg.warning / maxHot) * (H - 12)); ctx.lineTo(W, H - 6 - (cfg.warning / maxHot) * (H - 12));
+  ctx.stroke();
+  ctx.strokeStyle = "#5a1f16"; ctx.beginPath();
+  ctx.moveTo(0, H - 6 - (cfg.maxHeat / maxHot) * (H - 12)); ctx.lineTo(W, H - 6 - (cfg.maxHeat / maxHot) * (H - 12));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // zero baseline for the centred net-heat trace
+  ctx.strokeStyle = "#2b303a"; ctx.beginPath();
+  ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke();
+
+  line(hot, topDown(maxHot), "#e5533d");
+  line(rf, topDown(maxRf), "#4cc2ff");
+  line(net, centred(maxNet), "#e3b341");
+}
+
+/* ------------------------------------------------------------------ *
+ * Loop
+ * ------------------------------------------------------------------ */
+const HISTORY_LIMIT = 3000;
+
+/** One full step: simulate, record history, trim. Used by every run mode. */
+function step() {
+  simulateTick();
+  heatHistory.push(last.hottest);
+  rfHistory.push(last.energyProduced);
+  netHistory.push(last.netHeat);
+  if (heatHistory.length > HISTORY_LIMIT) {
+    heatHistory.shift(); rfHistory.shift(); netHistory.shift();
+  }
+  return last;
+}
+
+function frame() {
+  const per = +document.getElementById("speed").value;
+  for (let i = 0; i < per; i++) {
+    step();
+    if (dead || unstableTicks > 0) break;
+  }
+  renderGrid(); renderMetrics(); renderStatus(); renderChart();
+}
+
+function start() {
+  if (timer) return;
+  timer = setInterval(frame, 1000 / 20);
+  document.getElementById("btnRun").textContent = "\u23F8 暂停";
+}
+function stop() {
+  if (timer) clearInterval(timer);
+  timer = null;
+  document.getElementById("btnRun").textContent = "\u25B6 开始";
+}
+
+function runTicks(n) {
+  for (let i = 0; i < n && !dead; i++) step();
+  renderGrid(); renderMetrics(); renderStatus(); renderChart();
+}
+
+/* ------------------------------------------------------------------ *
+ * Hover info
+ * ------------------------------------------------------------------ */
+function showHover(td) {
+  const x = +td.dataset.x, z = +td.dataset.z, i = idx(x, z);
+  const key = cells[i], def = BLOCKS[key];
+  const host = document.getElementById("hoverInfo");
+  if (key === "empty") { host.innerHTML = "空格子 —— 没有组件，同时会断开相邻关系。"; return; }
+
+  let html = `<b>${def.name}</b> @ ${x},${z}<br>热量：<b>${heats[i]} K</b>`;
+  if (last) {
+    const perLayer = last.mult ? Math.trunc(heats[i] / last.mult) : heats[i];
+    html += ` &middot; 折算单层 ${perLayer} K &middot; 本刻变化 ${last.diffs[i] >= 0 ? "+" : ""}${last.diffs[i]} K`;
+  }
+  if (def.rodCount) {
+    let pulses = def.internalPulses, refl = 0, rods = 0;
+    for (const [nx, nz] of activeNeighbours(x, z)) {
+      const nd = BLOCKS[cells[idx(nx, nz)]];
+      if (nd.rodCount) { pulses += nd.rodCount; rods++; }
+      else if (nd.reflector) { pulses += def.rodCount; refl++; }
+    }
+    const mult = heatHeightMult();
+    const heat = Math.trunc((idiv(pulses, 2) * pulses + 4) * mult);
+    html += `<br>棒数 ${def.rodCount} &middot; 内部脉冲 ${def.internalPulses} &middot; 邻居：${rods} 根燃料棒，${refl} 个反射器`;
+    html += `<br>总脉冲 <b>${pulses}</b> &rarr; ${cfg.rfPerPulse * pulses * cfg.height} RF/刻 &middot; +${heat} K/刻`;
+    html += `<br><span class="note">需要在上方天花板放置燃料口</span>`;
+  }
+  if (def.absorber)
+    html += `<br>每刻从每个邻居移除 ${cfg.absorberRate} K &middot; <span class="note">需要上方冷却剂口，每刻消耗 ${cfg.height} 个冷却剂</span>`;
+  if (def.vent)
+    html += `<br>从最热的邻居移除 min(h/${cfg.ventRelativeRate} + ${cfg.ventBaseRate}, h)`;
+  if (def.recovery)
+    html += `<br>每个邻居移除 ${cfg.recoveryRate} K，每个邻居产出 ${cfg.recoveryRate * cfg.rfPerHeat * cfg.height} RF/刻`;
+  if (def.pipe)
+    html += `<br>从更热的邻居吸取 min(差值/4 + 10, 差值)`;
+  if (def.reflector)
+    html += `<br>每个相邻燃料棒会额外获得自身棒数的脉冲`;
+  host.innerHTML = html;
+}
+
+/* ------------------------------------------------------------------ *
+ * Validation
+ * ------------------------------------------------------------------ */
+function validate() {
+  const host = document.getElementById("validation");
+  const counts = {};
+  for (const k of cells) counts[k] = (counts[k] || 0) + 1;
+  const msgs = [];
+  if (!counts.single && !counts.double && !counts.quad)
+    msgs.push("没有任何燃料棒：反应堆不会产出任何东西。");
+  if (counts.absorber && !counts.vent && !counts.recovery && !counts.pipe)
+    msgs.push("吸收器只冷却直接相邻的组件，且需要冷却剂 —— 确认它们确实紧贴燃料棒。");
+  if (!counts.vent && !counts.absorber && !counts.recovery && (counts.single || counts.double || counts.quad))
+    msgs.push("完全没有散热：热量只会不断累积。");
+  if (counts.recovery && !counts.pipe && !counts.vent && !counts.absorber)
+    msgs.push("回收口的散热量低于吸收器 —— 高温设计仍然需要吸收器。");
+  host.innerHTML = msgs.map(m => `<div class="warnbox">${m}</div>`).join("");
+}
+
+/* ------------------------------------------------------------------ *
+ * Presets
+ * ------------------------------------------------------------------ */
+const PRESETS = {
+  single(grid, n) {
+    const c = Math.floor(n / 2);
+    grid[idx(c, c)] = "single";
+    for (const [x, z] of neighbours(c, c)) grid[idx(x, z)] = "vent";
+  },
+  double(grid, n) {
+    const c = Math.floor(n / 2);
+    grid[idx(c, c)] = "double";
+    for (const [x, z] of neighbours(c, c)) grid[idx(x, z)] = "pipe";
+    for (const [x, z] of neighbours(c, c))
+      for (const [x2, z2] of neighbours(x, z)) {
+        const i = idx(x2, z2);
+        if (grid[i] === "empty") grid[i] = "vent";
+      }
+  },
+  quad(grid, n) {
+    const c = Math.floor(n / 2);
+    grid[idx(c, c)] = "quad";
+    for (const [x, z] of neighbours(c, c)) grid[idx(x, z)] = "absorber";
+    for (const [x, z] of neighbours(c, c))
+      for (const [x2, z2] of neighbours(x, z)) {
+        const i = idx(x2, z2);
+        if (grid[i] === "empty") grid[i] = "vent";
+      }
+  },
+  absorber(grid, n) {
+    const c = Math.floor(n / 2);
+    grid[idx(c, c)] = "quad";
+    for (let d = 1; d <= 2; d++)
+      for (let x = c - d; x <= c + d; x++)
+        for (let z = c - d; z <= c + d; z++) {
+          if (x < 0 || z < 0 || x >= n || z >= n) continue;
+          const i = idx(x, z);
+          if (grid[i] === "empty") grid[i] = "absorber";
+        }
+    grid[idx(c, c)] = "quad";
+  },
+  recovery(grid, n) {
+    const c = Math.floor(n / 2);
+    grid[idx(c, c)] = "quad";
+    for (const [x, z] of neighbours(c, c)) grid[idx(x, z)] = "recovery";
+    for (const [x, z] of neighbours(c, c))
+      for (const [x2, z2] of neighbours(x, z)) {
+        const i = idx(x2, z2);
+        if (grid[i] === "empty") grid[i] = "absorber";
+      }
+  }
+};
+
+/* ------------------------------------------------------------------ *
+ * Wiring
+ * ------------------------------------------------------------------ */
+const $ = id => document.getElementById(id);
+
+$("gridSize").onchange = e => { stop(); size = +e.target.value; buildGrid(); resetSim(); renderGrid(); validate(); };
+$("preset").onchange = e => {
+  const p = PRESETS[e.target.value];
+  if (!p) return;
+  stop();
+  buildGrid();
+  p(cells, size);
+  resetSim(); renderGrid(); validate();
+};
+$("btnClear").onclick = () => { stop(); buildGrid(); resetSim(); renderGrid(); validate(); };
+$("btnFillVent").onclick = () => {
+  for (let i = 0; i < cells.length; i++) if (cells[i] === "empty") cells[i] = "vent";
+  renderGrid(); validate();
+};
+$("showNumbers").onchange = renderGrid;
+
+$("btnRun").onclick = () => { timer ? stop() : start(); };
+$("btnStep").onclick = () => { stop(); runTicks(1); };
+$("btnStep100").onclick = () => { stop(); runTicks(100); };
+$("btnReset").onclick = () => { stop(); resetSim(); renderGrid(); renderMetrics(); renderStatus(); renderChart(); };
+$("btnSettle").onclick = () => {
+  stop();
+  for (let i = 0; i < 20000 && !dead; i++) {
+    step();
+    if (unstableTicks > 0) break;
+    if (i > 200 && Math.abs(heatTrend()) < 0.01) break;   // steady state reached
+  }
+  renderGrid(); renderMetrics(); renderStatus(); renderChart();
+};
+
+function resetSim() {
+  heats = new Array(size * size).fill(0);
+  heatHistory = []; rfHistory = []; netHistory = [];
+  tick = 0; unstableTicks = 0; last = null; dead = false;
+  document.getElementById("heatbar").style.width = "0%";
+}
+
+// config inputs
+const CFG_MAP = {
+  cfgHeight: "height", cfgSlope: "slope", cfgMaxHeat: "maxHeat", cfgWarning: "warning",
+  cfgRf: "rfPerPulse", cfgAbsorber: "absorberRate", cfgVentBase: "ventBaseRate",
+  cfgVentRel: "ventRelativeRate", cfgRecovery: "recoveryRate", cfgRfPerHeat: "rfPerHeat",
+  cfgUnstable: "maxUnstableTicks"
+};
+for (const [id, key] of Object.entries(CFG_MAP)) {
+  const el = $(id);
+  el.value = cfg[key];
+  el.onchange = () => {
+    const v = parseFloat(el.value);
+    if (!isNaN(v)) cfg[key] = v;
+    renderMetrics(); renderStatus(); renderChart();
+  };
+}
+$("btnCfgReset").onclick = () => {
+  Object.assign(cfg, DEFAULTS);
+  for (const [id, key] of Object.entries(CFG_MAP)) $(id).value = cfg[key];
+  renderMetrics(); renderStatus(); renderChart();
+};
+
+// block reference list
+document.getElementById("blockRef").innerHTML = Object.values(BLOCKS)
+  .filter(d => d.glyph)
+  .map(d => `<div><b style="color:${d.color}">${d.glyph}</b> ${d.name}</div>`).join("");
+
+/* boot */
+buildGrid();
+PRESETS.single(cells, size);
+renderGrid(); renderMetrics(); renderStatus(); validate(); renderChart();
+
+/* ------------------------------------------------------------------ *
+ * Expose the pure functions for the self-test (see reactor-planner.test.js)
+ * ------------------------------------------------------------------ */
+window.ReactorPlanner = {
+  BLOCKS, DEFAULTS, cfg,
+  setSize(n) { size = n; buildGrid(); },
+  setCells(list) { cells = list.slice(); heats = new Array(cells.length).fill(0); },
+  getCells: () => cells.slice(),
+  getHeats: () => heats.slice(),
+  resetSim,
+  simulateTick,
+  step,
+  heatHeightMult,
+  heatTrend,
+  ticksUntilMeltdown,
+  getLast: () => last,
+  getTick: () => tick,
+  isDead: () => dead
+};
+</script>
+</body>
+</html>
