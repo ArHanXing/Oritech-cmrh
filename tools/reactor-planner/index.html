@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Oritech 裂变反应堆规划器</title>
+<title>OR裂变堆规划器</title>
 <style>
   :root {
     --bg: #14161a;
@@ -103,7 +103,7 @@
 </head>
 <body>
 <header>
-  <h1>Oritech 裂变反应堆规划器</h1>
+  <h1>Oritech-CmRhTweak 裂变反应堆规划器</h1>
   <span class="sub">单层布局 &times; 堆叠高度 &middot; 复刻游戏内的逐刻逻辑</span>
 </header>
 
@@ -250,9 +250,11 @@
     <div class="card">
       <h2>这个模拟有多还原？</h2>
       <div class="note">
-        <p>这里的每刻处理顺序是固定的：燃料棒 &rarr; 热量管道 &rarr; 吸收器 &rarr; 散热口 &rarr; 回收口。
-        而游戏遍历的是 <code>HashMap</code>，因此同一刻内各组件的处理顺序并不固定，结果每刻可能相差几点 K。
-        稳态数值是一致的；请把它当作设计工具，而不是逐位精确的复刻。</p>
+        <p>这里和游戏一样，每刻用<b>单趟</b>遍历处理所有组件（棒 → 热管 → 吸收器 → 散热口 → 回收口，
+        每个组件读到的是它前面组件已经更新过的热量）。唯一残留的偏差是迭代顺序：
+        游戏遍历的是 <code>HashMap</code>（顺序任意），本工具按行优先的固定顺序。
+        孤立组件与绝大多数布局结果完全一致；<b>热管密集的网络里，同一刻的顺序差异可能累积出数量级偏差</b>。
+        请把它当作设计工具，而不是逐位精确的复刻。</p>
         <p>运行时假设燃料与冷却剂无限供应：每个燃料口都是满的、每个吸收器都有冷却剂，
         这对应一个供应充足的反应堆。</p>
         <p>每层内部结构完全相同（游戏本身也这样要求）。能量、燃料与冷却剂消耗都随堆叠高度缩放，
@@ -338,6 +340,13 @@ function heatHeightMult() { return Math.max(0.01, 1 + (cfg.height - 1) * cfg.slo
 
 /* ------------------------------------------------------------------ *
  * One simulation tick, mirroring ReactorControllerBlockEntity.serverTick
+ *
+ * Java uses a SINGLE pass over the component map with an if/else chain:
+ * rods -> pipes -> absorbers -> vents -> recovery ports, each component
+ * seeing the partially-updated heats of the components processed before it.
+ * This tool uses the same single-pass structure; the only remaining
+ * difference is the iteration order (the game uses HashMap order, which is
+ * arbitrary, this tool uses row-major), which only matters within one tick.
  * ------------------------------------------------------------------ */
 function simulateTick() {
   if (dead) return last;
@@ -346,94 +355,83 @@ function simulateTick() {
   let heatProduced = 0, heatRemoved = 0, energyProduced = 0, energyFromRecovery = 0;
   const diffs = new Array(size * size).fill(0);
 
-  // --- rods ---
   for (let z = 0; z < size; z++) for (let x = 0; x < size; x++) {
     const def = BLOCKS[cells[idx(x, z)]];
-    if (!def.rodCount) continue;
-    totalRods++;
-
-    let pulses = def.internalPulses;
-    for (const [nx, nz] of activeNeighbours(x, z)) {
-      const nd = BLOCKS[cells[idx(nx, nz)]];
-      if (nd.rodCount) pulses += nd.rodCount;                 // neighbour rod
-      else if (nd.reflector) pulses += def.rodCount;          // bounced pulse
-    }
-
-    activeRods++;
-    energyProduced += cfg.rfPerPulse * pulses * cfg.height;
-    const heatCreated = Math.trunc((idiv(pulses, 2) * pulses + 4) * mult);
-    heats[idx(x, z)] += heatCreated;
-    diffs[idx(x, z)] += heatCreated;
-    heatProduced += heatCreated;
-  }
-
-  // --- heat pipes ---
-  for (let z = 0; z < size; z++) for (let x = 0; x < size; x++) {
-    if (!BLOCKS[cells[idx(x, z)]].pipe) continue;
     const self = idx(x, z);
-    for (const [nx, nz] of activeNeighbours(x, z)) {
-      const n = idx(nx, nz);
-      if (heats[n] <= heats[self]) continue;
-      const diff = heats[n] - heats[self];
-      const gained = Math.min(idiv(diff, 4) + 10, diff);
-      heats[n] -= gained;
-      heats[self] += gained;
-      diffs[n] -= gained;
-      diffs[self] += gained;
-    }
-  }
 
-  // --- absorbers ---
-  for (let z = 0; z < size; z++) for (let x = 0; x < size; x++) {
-    if (!BLOCKS[cells[idx(x, z)]].absorber) continue;
-    let sum = 0;
-    for (const [nx, nz] of activeNeighbours(x, z)) {
-      const n = idx(nx, nz);
-      if (heats[n] <= 0) continue;
-      heats[n] -= cfg.absorberRate;      // intentionally not clamped (game behaviour)
-      diffs[n] -= cfg.absorberRate;
-      sum += cfg.absorberRate;
-    }
-    heatRemoved += sum;
-    diffs[idx(x, z)] = 0;
-  }
+    if (def.rodCount) {
+      totalRods++;
 
-  // --- vents (hottest neighbour only) ---
-  for (let z = 0; z < size; z++) for (let x = 0; x < size; x++) {
-    if (!BLOCKS[cells[idx(x, z)]].vent) continue;
-    let hottest = -1, max = 0;
-    for (const [nx, nz] of activeNeighbours(x, z)) {
-      const n = idx(nx, nz);
-      if (heats[n] <= max) continue;
-      hottest = n; max = heats[n];
-    }
-    if (max !== 0 && hottest >= 0) {
-      const removed = Math.min(idiv(max, cfg.ventRelativeRate) + cfg.ventBaseRate, max);
-      heats[hottest] -= removed;
-      diffs[hottest] -= removed;
-      heatRemoved += removed;
-    }
-  }
+      let pulses = def.internalPulses;
+      for (const [nx, nz] of activeNeighbours(x, z)) {
+        const nd = BLOCKS[cells[idx(nx, nz)]];
+        if (nd.rodCount) pulses += nd.rodCount;                 // neighbour rod
+        else if (nd.reflector) pulses += def.rodCount;          // bounced pulse
+      }
 
-  // --- recovery ports ---
-  for (let z = 0; z < size; z++) for (let x = 0; x < size; x++) {
-    if (!BLOCKS[cells[idx(x, z)]].recovery) continue;
-    let sum = 0;
-    for (const [nx, nz] of activeNeighbours(x, z)) {
-      const n = idx(nx, nz);
-      if (heats[n] <= 0) continue;
-      const removed = Math.min(cfg.recoveryRate, heats[n]);
-      heats[n] -= removed;
-      diffs[n] -= removed;
-      sum += removed;
+      activeRods++;
+      energyProduced += cfg.rfPerPulse * pulses * cfg.height;
+      const heatCreated = Math.trunc((idiv(pulses, 2) * pulses + 4) * mult);
+      heats[self] += heatCreated;
+      diffs[self] += heatCreated;
+      heatProduced += heatCreated;
+
+    } else if (def.pipe) {
+      for (const [nx, nz] of activeNeighbours(x, z)) {
+        const n = idx(nx, nz);
+        if (heats[n] <= heats[self]) continue;
+        const diff = heats[n] - heats[self];
+        const gained = Math.min(idiv(diff, 4) + 10, diff);
+        heats[n] -= gained;
+        heats[self] += gained;
+        diffs[n] -= gained;
+        diffs[self] += gained;
+      }
+
+    } else if (def.absorber) {
+      let sum = 0;
+      for (const [nx, nz] of activeNeighbours(x, z)) {
+        const n = idx(nx, nz);
+        if (heats[n] <= 0) continue;
+        heats[n] -= cfg.absorberRate;      // intentionally not clamped (game behaviour)
+        diffs[n] -= cfg.absorberRate;
+        sum += cfg.absorberRate;
+      }
+      heatRemoved += sum;
+      diffs[self] = 0;
+
+    } else if (def.vent) {
+      let hottest = -1, max = 0;
+      for (const [nx, nz] of activeNeighbours(x, z)) {
+        const n = idx(nx, nz);
+        if (heats[n] <= max) continue;
+        hottest = n; max = heats[n];
+      }
+      if (max !== 0 && hottest >= 0) {
+        const removed = Math.min(idiv(max, cfg.ventRelativeRate) + cfg.ventBaseRate, max);
+        heats[hottest] -= removed;
+        diffs[hottest] -= removed;
+        heatRemoved += removed;
+      }
+
+    } else if (def.recovery) {
+      let sum = 0;
+      for (const [nx, nz] of activeNeighbours(x, z)) {
+        const n = idx(nx, nz);
+        if (heats[n] <= 0) continue;
+        const removed = Math.min(cfg.recoveryRate, heats[n]);
+        heats[n] -= removed;
+        diffs[n] -= removed;
+        sum += removed;
+      }
+      if (sum > 0) {
+        const recovered = sum * cfg.rfPerHeat * cfg.height;
+        energyProduced += recovered;
+        energyFromRecovery += recovered;
+      }
+      heatRemoved += sum;
+      diffs[self] = 0;
     }
-    if (sum > 0) {
-      const recovered = sum * cfg.rfPerHeat * cfg.height;
-      energyProduced += recovered;
-      energyFromRecovery += recovered;
-    }
-    heatRemoved += sum;
-    diffs[idx(x, z)] = 0;
   }
 
   // --- global values ---
@@ -767,8 +765,7 @@ function showHover(td) {
 /* ------------------------------------------------------------------ *
  * Validation
  * ------------------------------------------------------------------ */
-function validate() {
-  const host = document.getElementById("validation");
+function computeValidationMessages() {
   const counts = {};
   for (const k of cells) counts[k] = (counts[k] || 0) + 1;
   const msgs = [];
@@ -780,7 +777,28 @@ function validate() {
     msgs.push("完全没有散热：热量只会不断累积。");
   if (counts.recovery && !counts.pipe && !counts.vent && !counts.absorber)
     msgs.push("回收口的散热量低于吸收器 —— 高温设计仍然需要吸收器。");
-  host.innerHTML = msgs.map(m => `<div class="warnbox">${m}</div>`).join("");
+
+  // per-rod total pulses. P >= 20 can never be cooled, no matter the layout
+  let maxPulses = 0;
+  for (let z = 0; z < size; z++) for (let x = 0; x < size; x++) {
+    const def = BLOCKS[cells[idx(x, z)]];
+    if (!def.rodCount) continue;
+    let pulses = def.internalPulses;
+    for (const [nx, nz] of activeNeighbours(x, z)) {
+      const nd = BLOCKS[cells[idx(nx, nz)]];
+      if (nd.rodCount) pulses += nd.rodCount;
+      else if (nd.reflector) pulses += def.rodCount;
+    }
+    if (pulses > maxPulses) maxPulses = pulses;
+  }
+  if (maxPulses >= 20)
+    msgs.push("有燃料棒的总脉冲达到 " + maxPulses + "（≥20）：热管不足以搬走这么多热量，无论怎么布局都必然熔毁。可行上限约为 P=16。");
+  return msgs;
+}
+
+function validate() {
+  document.getElementById("validation").innerHTML =
+    computeValidationMessages().map(m => `<div class="warnbox">${m}</div>`).join("");
 }
 
 /* ------------------------------------------------------------------ *
@@ -925,6 +943,7 @@ window.ReactorPlanner = {
   heatHeightMult,
   heatTrend,
   ticksUntilMeltdown,
+  computeValidationMessages,
   getLast: () => last,
   getTick: () => tick,
   isDead: () => dead
