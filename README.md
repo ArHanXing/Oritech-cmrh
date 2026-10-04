@@ -1,27 +1,17 @@
+# 我很抱歉使用AI糟蹋了这个项目，唉，什么时候学会Java就好了
 <br/>
 <p align="center">
   <a href="https://github.com/rearth/Oritech">
     <img src="https://github.com/Rearth/Oritech/assets/10100603/d459b3fa-ef6f-4675-99d7-c44a78a3cf71" alt="Logo" width="80" height="80">
   </a>
 
-<h3 align="center">Oritech</h3>
+<h3 align="center">CmRh-Oritech</h3>
 
 <div align="center">
-  A minecraft fabric / neoforge tech mod, currently in beta.
-  <br/>
+  为cmrhpack准备的二改版本（第三个了，真是的）
   <br/>
   <a href="https://moddedmc.org/en/mod/oritech/docs"><strong>Explore the docs»</strong></a>
   <br/>
-  <br/>
-  <a href="https://github.com/rearth/Oritech/issues">Report Bug</a>
-  .
-  <a href="https://github.com/rearth/Oritech/issues">Request Feature</a>
-  <br/>
-  <br/>
-  <br/>
-
-  ![Downloads](https://img.shields.io/github/downloads/rearth/Oritech/total) ![Stargazers](https://img.shields.io/github/stars/rearth/Oritech?style=social) ![Issues](https://img.shields.io/github/issues/rearth/Oritech) ![License](https://img.shields.io/github/license/rearth/Oritech) ![Discord](https://img.shields.io/discord/1233448016128512082)
-
 
   
 </div>
@@ -39,8 +29,13 @@
 
 ---
 
-## About The Project
+## todo
+类似 hxreborn 的 jade 插件
+乱序输入（老逻辑）
+改核电逻辑
+改broken兼容配方
 
+## About The Project
 
 An upcoming tech mod for minecraft fabric. Features advanced ore processing, powered tools and armor, and much much more.
 
