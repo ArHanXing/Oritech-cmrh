@@ -30,7 +30,6 @@
 ---
 
 ## todo
-类似 hxreborn 的 jade 插件
 乱序输入（老逻辑）
 改核电逻辑
 改broken兼容配方
@@ -47,25 +46,8 @@ If you want to contribute, suggest ideas or just see what's planned, make sure t
 
 Includes JEI, REI and EMI compatibility. Works best with EMI.
 
-Extra mod compatibilities (allowing metals and other components to be processed in Oritech machines, and vice-versa) for the following mods are included:
-### Fabric
-- Alloy Forgery
-- Clutter
-- Energized Power
-- Mythic Metals
+Extra mod compatibilities (allowing metals and other components to be processed in Oritech machines, and vice-versa) are included for the following mod:
 - Tech Reborn
-### Neoforge
-- Actually Additions
-- Applied Energistics 2
-- Create
-- Ender IO
-- Energized Power
-- Immersive Engineering
-- Industrial Foregoing
-- Mekanism (and Mekanism Generators)
-- PneumaticCraft: Repressurized
-- Powah!
-- Productive Metalworks
 
 The following translations are available:
 - English
@@ -86,22 +68,9 @@ The following translations are available:
 - Geckolib (for the animations)
 - Blockbench (to create and animate the models)
 
-## Roadmap
-
-See the [open issues](https://github.com/rearth/Oritech/issues) for a list of proposed features (and known issues).
-
 ## Depending on Oritech
 
-Release artifacts are published to the [BlameJared Maven repository](https://maven.blamejared.com/).
-
-```groovy
-repositories {
-    maven {
-        name = "BlameJared"
-        url = "https://maven.blamejared.com"
-    }
-}
-```
+你需要jitpack。
 
 Note that Oritech still has some dependencies that need to be installed in your dev env in order to boot up. You can find their maven setup guides on their
 respective github pages (or just use cursemaven, or manually drag in the jars if you really want). Currently, the following dependencies are required:
@@ -110,43 +79,15 @@ respective github pages (or just use cursemaven, or manually drag in the jars if
 - [Athena](https://github.com/terrarium-earth/Athena)
 - [Geckolib](https://github.com/bernie-g/geckolib)
 
-### Common
-
-The common module is published with Mojang mappings. It can only be used in an environment that doesn't remap the code,
-such as [ModDevGradle](https://github.com/neoforged/ModDevGradle) in Vanilla mode.
-If you use [Architectury Loom](https://github.com/architectury/architectury-loom), make sure to use the `intermediary`
-artifact, so it can be properly remapped. This will also work with yarn mappings.
-
-```groovy
-dependencies {
-    // Mojmaps - ModDevGradle
-    implementation "rearth.oritech:oritech-common-<minecraft-version>:<oritech-version>"
-    // Intermediary - Architectury Loom
-    modImplementation "rearth.oritech:oritech-common-<minecraft-version>-intermediary:<oritech-version>"
-}
-```
-
 ### Fabric
 
-The Fabric module is published in intermediary mappings.
+This fork is a single module Fabric mod (the former `common`/`fabric`/`neoforge` split has been merged into one
+project, and NeoForge support was removed). It is published in intermediary mappings.
 
 ```groovy
 dependencies {
     // Fabric Loom or Architectury Loom
     modImplementation "rearth.oritech:oritech-fabric-<minecraft-version>:<oritech-version>"
-}
-```
-
-### NeoForge
-
-The NeoForge module is published in Mojang mappings. It is not possible to get an intermediary artifact for this module.
-You can use it with yarn mappings, but it will not be remapped and have clashing names. It's still possible to use
-common code, though.
-
-```groovy
-dependencies {
-    // ModDevGradle or Architectury Loom
-    implementation "rearth.oritech:oritech-neoforge-<minecraft-version>:<oritech-version>"
 }
 ```
 

@@ -12,7 +12,3 @@ plugins {
 }
 
 rootProject.name = 'oritech'
-
-include 'common'
-include 'fabric'
-include 'neoforge'

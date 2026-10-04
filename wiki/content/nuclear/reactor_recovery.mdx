@@ -1,0 +1,24 @@
+---
+title: Reactor Heat Recovery Port
+id: oritech:reactor_recovery
+type: block
+---
+Heat recovery ports pull heat out of every neighboring component and turn it directly into energy.
+
+Unlike the [heat absorber](@oritech:reactor_condenser), a recovery port needs no coolant at all, and it is not
+limited to one component: it drains a fixed amount from **every** heated neighbor, so it is strongest when
+wedged between several hot components.
+
+For each neighboring component it removes up to 8 heat per tick, and every point of removed heat is converted
+into 2 RF. As with fuel rods, the generated energy is multiplied by the number of layers, while the heat removal
+itself is per layer. A recovery port never stores or produces heat of its own, it only moves it.
+
+Because it removes heat rather than simply tolerating it, a recovery port also buys you headroom against meltdown.
+The tradeoff is that it removes less heat per neighbor than a heat absorber does, so a reactor that sits close to
+its melting point still wants absorbers, while a reactor with spare cooling headroom can profit from recovery ports.
+
+Note that the removal rate has to stay competitive with what the fuel rods produce. Converting heat into energy
+earns 2 RF per heat, while a fuel rod at the limit of its pulse count earns roughly 128 / pulses RF per heat,
+so recovery ports are meant as a supplement and not as the main power source.
+
+For detailed information on reactor mechanics, see the [fission reactor guide]($reactor/introduction).

@@ -7,7 +7,7 @@
   "addons.mdx": "Addons",
   "particle_accelerator.mdx": "Particle Accelerator",
   "reactor": {
-    "name": "☢ Nuclear Reactors",
+    "name": "☢ Fission Reactors",
     "icon": null
   }
 }

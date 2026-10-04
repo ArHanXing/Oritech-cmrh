@@ -36,13 +36,12 @@ body:
       description: On which platform did the issue occur?
       options:
         - Fabric
-        - Neoforge
     validations:
       required: true
   - type: input
     attributes:
       label: Loader version
-      description: What version of Fabric/Neoforge are you using?
+      description: What version of Fabric are you using?
       placeholder: e.g. 0.15.11
     validations:
       required: true

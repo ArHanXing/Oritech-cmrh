@@ -7,7 +7,7 @@
   "addons.mdx": "插件",
   "particle_accelerator.mdx": "粒子加速器",
   "reactor": {
-    "name": "☢ 核反应堆",
+    "name": "☢ 裂变反应堆",
     "icon": null
   }
 }

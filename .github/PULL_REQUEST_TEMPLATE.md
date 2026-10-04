@@ -8,10 +8,10 @@ Fixes # (issue)
 
 # How Has This Been Tested?
 
-Please describe the tests that you ran to verify your changes. All changes have to be tested ingame on both loaders, and if any client-side code is involved, also on
+Please describe the tests that you ran to verify your changes. All changes have to be tested ingame on Fabric, and if any client-side code is involved, also on
 a dedicated server to avoid any issues there.
 
-- [ ] Feature has been tested ingame on both neoforge and fabric.
+- [ ] Feature has been tested ingame on Fabric.
 - [ ] Optional additional testing details
 
 # Checklist:

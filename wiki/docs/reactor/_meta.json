@@ -1,5 +1,6 @@
 {
-  "introduction.mdx": "Nuclear Reactor Introduction",
+  "introduction.mdx": "Fission Reactor Introduction",
   "components.mdx": "Component Details",
+  "mechanics.mdx": "Mechanics Reference",
   "designs.mdx": "Design Principles"
 }

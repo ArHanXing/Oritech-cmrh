@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "t": {
+      "item": "oritech:motor"
+    },
+    "c": {
+      "tag": "c:ingots/electrum"
+    },
+    "f": {
+      "tag": "c:ingots/steel"
+    }
+  },
+  "pattern": [
+    " t ",
+    "fcf",
+    "fcf"
+  ],
+  "result": {
+    "count": 1,
+    "id": "oritech:reactor_recovery"
+  }
+}

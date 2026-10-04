@@ -1,0 +1,112 @@
+---
+title: Reactor Mechanics Reference
+icon: oritech:area/reactor
+---
+
+This page is the exact-numbers companion to the [introduction]($reactor/introduction) and the
+[design principles]($reactor/designs). Everything below is the current behaviour of the reactor,
+including the numbers that are not shown anywhere in-game.
+
+## Geometry
+
+- The outer shell must be a rectangular box. All 12 edges must be [reactor wall](@oritech:reactor_wall) blocks.
+- The face walls may hold the [controller](@oritech:reactor_controller) and the side ports
+  ([energy](@oritech:reactor_energy_port), [redstone](@oritech:reactor_redstone_port)); everything else must be an interior component.
+- Interior layers must be identical along the Y axis. You design one layer in 2D and stack it.
+- Maximum size is 64 blocks per direction (`reactor.maxSize`).
+- Interior height is `stackHeight`. Energy, fuel and coolant consumption scale with it, but **heat removal does not**.
+
+## Fuel and pulses
+
+Fuel pellets are inserted through a [fuel port](@oritech:reactor_fuel_port) placed on the ceiling directly above a rod stack.
+
+| Pellet | Burn time | Rod capacity cost |
+| --- | --- | --- |
+| Small Uranium Pellet | 400 | 1 per single rod |
+| Uranium Pellet | 4000 | 1 per single rod |
+| Small Plutonium Pellet | 4000 | 1 per single rod |
+| Plutonium Pellet | 40000 | 1 per single rod |
+
+Each tick, every rod stack consumes `rodCount * stackHeight` from its port. A single rod uses 1, a double rod 2, a quad rod 4.
+
+Pulses are what actually drive both power and heat:
+
+- A single rod emits 1 internal pulse, a double rod 4, a quad rod 12.
+- Every neighboring rod adds its own rod count to the received pulses.
+- A neighboring [neutron reflector](@oritech:reactor_reflector) adds the rod's own rod count again (it bounces the pulse back).
+- Only the 4 horizontal neighbors count, and only components present in the reactor interior.
+
+Energy and heat per tick:
+
+```
+energy = 64 RF * totalPulses * stackHeight        (reactor.rfPerPulse = 64)
+heat   = (totalPulses / 2 * totalPulses + 4) * heatHeightMult
+```
+
+`heatHeightMult` is `1 + (stackHeight - 1) * reactor.heatHeightSlope`, and it is **1 by default**, so out of the box heat is height neutral.
+
+## Heat
+
+Every component is a temperature in K (shown as °C in-game). The two derived limits:
+
+- **Warning threshold**: `reactor.maxHeat * 0.8` = 1600 K by default, adjustable per reactor with the GUI slider (up to 3000 K).
+- **Meltdown**: when the hottest component exceeds `reactor.maxHeat` = 2000 K, a countdown of `reactor.maxUnstableTicks` = 600 ticks (30 s) starts. If heat stays above the limit for the whole countdown, the reactor explodes. Dropping below the threshold resets the countdown.
+- With **Safe Reactors** enabled, the explosion is replaced by a cooldown of `reactor.safeModeCooldown` = 2400 ticks (2 min), during which the reactor produces nothing.
+
+Because the meltdown check compares the **per-layer** heat (`hottest / heatHeightMult`), raising the height slope does not make tall reactors explode just for being tall. They melt down when cooling genuinely cannot keep up - which is exactly the intended cost of height.
+
+### Heat removal
+
+All removal rates are per layer and do not scale with height:
+
+| Component | Removes | Notes |
+| --- | --- | --- |
+| [Heat vent](@oritech:reactor_vent) | `neighborHeat / 100 + 4` from the single hottest neighbor | `reactor.ventRelativeRate` = 100, `reactor.ventBaseRate` = 4 |
+| [Heat absorber](@oritech:reactor_condenser) | 16 from **every** neighbor | needs 1 coolant item per stack height per tick |
+| [Heat recovery port](@oritech:reactor_recovery) | 8 from every neighbor | no coolant, converts the heat into energy |
+| [Heat pipe](@oritech:reactor_heat_pipe) | moves `diff / 4 + 10` towards itself | equalises temperature, does not destroy heat |
+
+A heat absorber needs `stackHeight` coolant items per tick while it is actually removing heat. Valid coolant is the
+`oritech:reactor_coolant_items` tag: ice, packed ice and blue ice.
+
+### Heat to energy
+
+The [heat recovery port](@oritech:reactor_recovery) is the only component that turns heat into power:
+
+```
+recovered energy = removedHeat * reactor.rfPerHeat * stackHeight      (reactor.rfPerHeat = 2)
+```
+
+Its default `recoveryRate` is 8 heat per neighbor per tick. Note the asymmetry: a recovery port earns 2 RF per heat,
+while a rod at the top of its pulse curve earns roughly `128 / totalPulses` RF per heat. At 36 pulses that is ~3.5 RF/heat,
+so recovery is a supplement, never the main generator.
+
+## Energy output
+
+- Rods insert `64 RF * totalPulses * stackHeight` into the controller's internal buffer each tick.
+- The buffer holds `reactor.reactorMaxEnergyStored` = 50,000,000 RF.
+- Each [energy port](@oritech:reactor_energy_port) pushes up to `reactor.reactorMaxEnergyOutput` = 25,000 RF/t to the block it faces.
+- Ports are drained in random order every tick, so throughput is shared fairly between them.
+
+## Redstone and comparators
+
+A [redstone port](@oritech:reactor_redstone_port) does two things:
+
+- A redstone **signal** disables the intake of new fuel. Rods already loaded keep burning their buffered fuel, so shutdown is gradual.
+- As a comparator **output** it has three modes, cycled by right-clicking: temperature of the hottest component (`hottest / maxHeat * 15`, minimum 1), number of non-empty rods (max 15), or energy buffer fill (1-15).
+
+## Practical numbers
+
+For a single interior layer, with `rfPerPulse = 64`:
+
+| Rod | Pulses | Heat/t | RF/t | RF per heat |
+| --- | --- | --- | --- | --- |
+| Single, alone | 1 | 4 | 32 | 8.0 |
+| Double, alone | 4 | 12 | 128 | 10.7 |
+| Double, 4 neighbors | 8 | 36 | 256 | 7.1 |
+| Quad, alone | 12 | 76 | 384 | 5.1 |
+| Quad, surrounded | 28 | 396 | 896 | 2.3 |
+
+The exact neighbours matter much more than the rod type: a quad rod alone is easy to cool, a quad rod touching four other
+quad rods is not. Use the in-game Jade panel (hover the controller) to read the live heat balance, the heat trend of the last
+5 seconds and a predicted time-to-meltdown without opening the GUI.

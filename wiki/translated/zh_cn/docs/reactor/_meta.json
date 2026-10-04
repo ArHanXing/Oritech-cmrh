@@ -1,5 +1,6 @@
 {
-  "introduction.mdx": "核反应堆简介",
+  "introduction.mdx": "裂变反应堆简介",
   "components.mdx": "反应堆组件",
+  "mechanics.mdx": "机制数值参考",
   "designs.mdx": "反应堆设计原则"
 }

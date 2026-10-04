@@ -1,167 +1,223 @@
 plugins {
-    id 'net.neoforged.moddev' version '2.0.107' apply false
-    id 'fabric-loom' version '1.13-SNAPSHOT' apply false
-    id "me.modmuss50.mod-publish-plugin" version "0.8.0" apply false
+    id 'java'
+    id 'fabric-loom' version '1.13-SNAPSHOT'
+    id 'maven-publish'
+    id "me.modmuss50.mod-publish-plugin" version "0.8.0"
     id 'org.moddedmc.wiki.toolkit' version '0.4.1'
 }
 
-// all projects including the root project
-allprojects {
-    apply plugin: 'java'
-    apply plugin: 'me.modmuss50.mod-publish-plugin'
-
-    base {
-        archivesName = "$mod_id-${project.name}-$minecraft_version"
-    }
-
-    java {
-        withSourcesJar()
-        toolchain.languageVersion = JavaLanguageVersion.of(21)
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-    }
+base {
+    archivesName = "$mod_id-fabric-$minecraft_version"
 }
 
-// all projects but the root project
-subprojects {
-    apply plugin: 'maven-publish'
+java {
+    withSourcesJar()
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
 
-    sourceSets {
-        main {
-            resources {
-                srcDir(file("src/main/generated"))
-                exclude("**/.cache")
-            }
+sourceSets {
+    main {
+        resources {
+            srcDir(file("src/main/generated"))
+            exclude("**/.cache")
         }
     }
 
+    // datagen source set (Fabric datagen entrypoint + its mod metadata)
+    create("data") {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+    }
+}
+
+loom {
+    runs {
+        client {
+            client()
+            ideConfigGenerated(true)
+            name = 'fabric - Client'
+        }
+        server {
+            server()
+            ideConfigGenerated(true)
+            name = 'fabric - Server'
+        }
+
+        // datagen run config for the loader-independent resources (models, block states, tags, etc.)
+        create("data_common") {
+            client()
+            ideConfigGenerated(true)
+            name = 'common - Data'
+            source("data")
+
+            property("fabric-api.datagen")
+            property("fabric-api.datagen.modid", "$mod_id-data")
+            property("fabric-api.datagen.output-dir", file("src/main/generated").absolutePath)
+            property("oritech.datagen.loader", "common")
+        }
+        // datagen run config for the Fabric specific compat recipes
+        create("data_fabric") {
+            client()
+            ideConfigGenerated(true)
+            name = 'fabric - Data'
+            source("data")
+
+            property("fabric-api.datagen")
+            property("fabric-api.datagen.modid", "$mod_id-data")
+            property("fabric-api.datagen.output-dir", file("src/main/generated").absolutePath)
+            property("oritech.datagen.loader", "fabric")
+        }
+    }
+
+    accessWidenerPath.set(file("src/main/resources/${mod_id}.accesswidener"))
+
+    mixin {
+        defaultRefmapName.set("${mod_id}.refmap.json")
+    }
+
+    createRemapConfigurations(sourceSets.data)
+}
+
+repositories {
+    mavenCentral()
+
+    // ModMaven
+    // mirrors a lot of commonly used Mavens
+    maven { url = "https://modmaven.dev" }
+    // CurseMaven
+    // Jade, Oracle Index
+    maven { url = "https://beta.cursemaven.com" }
+
+    // Architectury API, REI
+    maven { url = "https://maven.architectury.dev/" }
+    // Athena (CTM)
+    maven { url = "https://maven.teamresourceful.com/repository/maven-public/" }
+    // EMI
+    maven { url = 'https://maven.terraformersmc.com/' }
+    // FTB
+    maven { url = "https://maven.ftb.dev/releases" }
+    // GeckoLib
+    maven { url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/' }
+    // owo-lib
+    maven { url = 'https://maven.wispforest.io/releases/' }
+    // Forge Config API Port
+    maven { url = 'https://raw.githubusercontent.com/Fuzss/modresources/main/maven/' }
+}
+
+dependencies {
+    // Minecraft
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    mappings loom.layered {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${minecraft_version}:${parchment_mappings}@zip")
+    }
+
+    // Fabric Loader
+    modImplementation "net.fabricmc:fabric-loader:$fabric_loader_version"
+    // Fabric API
+    modImplementation "net.fabricmc.fabric-api:fabric-api:$fabric_api_version"
+
+    compileOnly 'org.ow2.asm:asm-tree:9.8'
+
+    // Auto Services (used to register the platform/API implementations through ServiceLoader)
+    compileOnly "com.google.auto.service:auto-service:$autoServiceVersion"
+    annotationProcessor "com.google.auto.service:auto-service:$autoServiceVersion"
+
+    // Architectury API
+    modApi "dev.architectury:architectury-fabric:$architectury_api_version"
+    // EMI
+    modCompileOnly "dev.emi:emi-fabric:$emi_version"
+    // Energy API
+    include modApi("teamreborn:energy:$reborn_energy_version") { transitive = false }
+    // GeckoLib
+    modApi "software.bernie.geckolib:geckolib-fabric-$minecraft_version:$geckolib_version"
+    // Jade
+    modCompileOnly "curse.maven:jade-324717:5639994"
+    // JEI
+    modCompileOnly("mezz.jei:jei-$minecraft_version-fabric:$jei_version") { transitive = false }
+    // Oracle Index
+    modCompileOnly "curse.maven:oracle-index-1206582:8282072"
+    // Forge Config API Port
+    modApi "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:$forge_config_api_port_version"
+    // REI
+    modCompileOnly "me.shedaniel:RoughlyEnoughItems-fabric:$rei_version"
+
+    // owo-lib
+    modApi "io.wispforest:owo-lib:$owo_version"
+
+    // ftb filters (optional)
+    modCompileOnly("dev.ftb.mods:ftb-filter-system-fabric:$ftb_filters_version") { transitive = false }
+
+    /// runtime-only
+
+    // recipe viewer
+    switch (recipe_viewer.toLowerCase(Locale.ROOT)) {
+        case "emi": modLocalRuntime "dev.emi:emi-fabric:$emi_version"; break
+        case "jei": modLocalRuntime "mezz.jei:jei-$minecraft_version-fabric:$jei_version"; break
+        case "rei": modLocalRuntime "me.shedaniel:RoughlyEnoughItems-fabric:$rei_version"; break
+        case "disabled": break
+        default: println("Unknown recipe viewer specified: $recipe_viewer. Must be EMI, REI, JEI, or disabled.")
+    }
+    // Athena (CTM)
+    modRuntimeOnly "earth.terrarium.athena:athena-fabric-1.21:4.0.0"
+    // Mod Menu
+    modLocalRuntime "com.terraformersmc:modmenu:11.0.3"
+    // Simple Conveyor Belts
+    modLocalRuntime "curse.maven:simple-conveyor-belts-1292980:6721806"
+    // Tags Viewer
+    modLocalRuntime "curse.maven:tags-viewer-1119728:5807898"
+    // Jade
+    modLocalRuntime "curse.maven:jade-324717:5639994"
+
+    /// datagen-only
+
+    // Tech Reborn (the only supported mod compat)
+    modDataImplementation "curse.maven:techreborn-233564:5608205"
+    modDataImplementation "curse.maven:reborncore-237903:5608204"
+}
+
+tasks.withType(AbstractCopyTask).configureEach {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+processResources {
+    // copy wiki folder to assets
+    from("$rootDir/wiki") {
+        into "assets/oracle_index/books/oritech"
+        exclude 'assets/item/**' // items are rendered in-game as actual item components, no need to include them here
+    }
+
+    inputs.property 'version', project.version
+    filesMatching(['fabric.mod.json']) {
+        expand version: version
+    }
+}
+
+['apiElements', 'runtimeElements', 'sourcesElements'].each { variant ->
+    configurations."$variant".outgoing {
+        capability("$group:${base.archivesName.get()}:$version")
+        capability("$group:$mod_id:$version")
+    }
+    publishing.publications.configureEach {
+        suppressPomMetadataWarningsFor(variant)
+    }
+}
+
+// configure Maven publishing
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = base.archivesName.get()
+            from components.java
+        }
+    }
     repositories {
-        mavenCentral()
-        
-        // ModMaven
-        // mirrors a lot of commonly used Mavens
-        maven { url = "https://modmaven.dev" }
-        // CurseMaven
-        // Jade, Oracle Index
-        maven { url = "https://beta.cursemaven.com" }
-        
-        // Architectury API, REI
-        maven { url = "https://maven.architectury.dev/" }
-        // Athena (CTM)
-        maven { url = "https://maven.teamresourceful.com/repository/maven-public/" }
-        // EMI
-        maven { url = 'https://maven.terraformersmc.com/' }
-        // Forgified Fabric API
-        maven { url = "https://maven.su5ed.dev/releases" }
-        // FTB Chunks
-        maven { url = "https://maven.ftb.dev/releases" }
-        // GeckoLib
-        maven { url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/' }
-        // owo-lib
-        maven { url = 'https://maven.wispforest.io/releases/' }
-        // Forge Config API Port
-        maven { url = 'https://raw.githubusercontent.com/Fuzss/modresources/main/maven/' }
-    }
-
-    dependencies {
-        // Auto Services
-        compileOnly "com.google.auto.service:auto-service:$autoServiceVersion"
-        annotationProcessor "com.google.auto.service:auto-service:$autoServiceVersion"
-    }
-
-    ['apiElements', 'runtimeElements', 'sourcesElements'].each { variant ->
-        configurations."$variant".outgoing {
-            capability("$group:${base.archivesName.get()}:$version")
-            capability("$group:$mod_id-${project.name}-${minecraft_version}:$version")
-            capability("$group:$mod_id:$version")
-        }
-        publishing.publications.configureEach {
-            suppressPomMetadataWarningsFor(variant)
-        }
-    }
-
-    tasks.withType(AbstractCopyTask).configureEach {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    }
-
-    // configure Maven publishing
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                artifactId = base.archivesName.get()
-                from components.java
-            }
-        }
-        repositories {
-            maven {
-                url System.getenv('local_maven_url')
-            }
-        }
-    }
-}
-
-// only loader projects
-subprojects {
-    if (project.path == ":common") {
-        return
-    }
-
-    configurations {
-        commonJava {
-            canBeResolved = true
-        }
-        commonResources {
-            canBeResolved = true
-        }
-    }
-
-    dependencies {
-        compileOnly(project(':common')) {
-            capabilities {
-                requireCapability "$group:$mod_id"
-            }
-            transitive = false
-        }
-        commonJava project(path: ':common', configuration: 'commonJava')
-        commonResources project(path: ':common', configuration: 'commonResources')
-    }
-
-    sourceSets {
-        create("data") {
-            compileClasspath += sourceSets.main.output
-            runtimeClasspath += sourceSets.main.output
-            compileClasspath += sourceSets.main.compileClasspath
-            runtimeClasspath += sourceSets.main.runtimeClasspath
-        }
-    }
-
-    tasks {
-        processResources {
-            dependsOn(configurations.commonResources)
-            from(configurations.commonResources)
-            
-            // copy wiki folder to assets
-            from("$rootDir/wiki") {
-                into "assets/oracle_index/books/oritech"
-                exclude 'assets/item/**' // items are rendered in-game as actual item components, no need to include them here
-            }
-        
-            inputs.property 'version', project.version
-            filesMatching(['META-INF/neoforge.mods.toml', "fabric.mod.json"]) {
-                expand version: version
-            }
-        }
-
-        named('compileJava', JavaCompile) {
-            dependsOn(configurations.commonJava)
-            source(configurations.commonJava)
-        }
-
-        named('sourcesJar', Jar) {
-            dependsOn(configurations.commonJava)
-            from(configurations.commonJava)
-            dependsOn(configurations.commonResources)
-            from(configurations.commonResources)
+        maven {
+            url System.getenv('local_maven_url')
         }
     }
 }
@@ -177,15 +233,56 @@ wiki {
 }
 
 publishMods {
+    file = remapJar.archiveFile
+    changelog = file("./CHANGELOG.MD").getText()
+    type = STABLE
+    modLoaders.add("fabric")
+
+    modrinth {
+        accessToken = providers.environmentVariable("MODRINTH_API_KEY")
+        projectId = "4sYI62kA"
+        minecraftVersions.add("1.21.1")
+        minecraftVersions.add("1.21")
+
+        requires("geckolib")
+        requires("athena-ctm")
+        requires("fabric-api")
+        requires("architectury-api")
+        requires("forge-config-api-port")
+        optional("oracle-index")
+
+        announcementTitle = "Fabric Version on Modrinth"
+    }
+
+    curseforge {
+        accessToken = providers.environmentVariable("CURSEFORGE_API_KEY")
+        projectId = "1030830"
+        minecraftVersions.add("1.21.1")
+        minecraftVersions.add("1.21")
+
+        requires("geckolib")
+        requires("athena")
+        requires("fabric-api")
+        requires("architectury-api")
+        requires("forge-config-api-port")
+        optional("oracle-index")
+
+        javaVersions.add(JavaVersion.VERSION_21)
+        clientRequired = true
+        serverRequired = true
+
+        projectSlug = "oritech"
+        announcementTitle = "Fabric Version on CurseForge"
+    }
+
     github {
         accessToken = providers.environmentVariable("GITHUB_TOKEN")
         repository = "Rearth/Oritech"
         commitish = "1.21"
-        changelog = file("./CHANGELOG.MD").getText()
-        type = STABLE
-        tagName = "v${project.version}"
 
         // Allow the release to be initially created without any files.
         allowEmptyFiles = true
+
+        tagName = "v${project.version}"
     }
 }

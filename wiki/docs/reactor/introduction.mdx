@@ -4,7 +4,7 @@ icon: oritech:area/reactor
 ---
 
 <Callout variant="warning">
-    Welcome to the world of nuclear reactors, where harnessing the power of the atom is as thrilling as it is perilous.
+    Welcome to the world of fission reactors, where harnessing the power of the atom is as thrilling as it is perilous.
     Remember, with great power comes great responsibility, and potentially explosive consequences. Please ensure all safety protocols
     are followed to avoid turning your lab into a glowing crater.
 </Callout>
@@ -51,3 +51,14 @@ This is how a component stack may look:
 <center>
 <ModAsset location="oritech:area/port_show" width={500} />
 </center>
+
+## Reading a Reactor In-Game
+
+Hover the [controller](@oritech:reactor_controller) with Jade installed and the tooltip becomes a live diagnostic panel:
+assembly state, interior size and height, active/total rods, buffered fuel, energy production and buffer fill,
+heat produced vs. removed with the net balance, the hottest component (absolute, per layer and percentage of the limit),
+the change of the hottest component in the last tick, the heat trend over the last 5 seconds, a predicted status
+(stable / above warning / heating with an estimated time to meltdown / melting down) and the meltdown countdown once it is already unstable.
+This is usually faster than opening the GUI, and it works while the reactor is running.
+
+For the exact formulas behind every number, see the [mechanics reference]($reactor/mechanics).
