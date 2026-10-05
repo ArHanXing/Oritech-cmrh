@@ -606,6 +606,22 @@ public class ReactorControllerBlockEntity extends NetworkedBlockEntity implement
             return;
         }
         
+        // a reactor must have exactly one controller. Without this check every controller placed on
+        // the same shell could assemble the same structure independently, and each active controller
+        // would drain the same fuel ports and generate its own power, multiplying the output.
+        var duplicateController = BlockPos.betweenClosedStream(cornerA, cornerB).anyMatch(pos -> {
+            if (pos.equals(worldPosition)) return false;
+            if (isAtEdgeOfBox(pos, finalCornerA, finalCornerB)) return false;
+            if (!isOnWall(pos, finalCornerA, finalCornerB)) return false;
+            return level.getBlockState(pos).getBlock() instanceof ReactorControllerBlock;
+        });
+        
+        if (duplicateController) {
+            if (player != null)
+                player.sendSystemMessage(Component.translatable("message.oritech.reactor_multiple_controllers"));
+            return;
+        }
+        
         // verify interior is identical in all layers
         var interiorHeight = cornerB.getY() - cornerA.getY() - 1;
         var cornerAFlat = cornerA.offset(1, 1, 1);

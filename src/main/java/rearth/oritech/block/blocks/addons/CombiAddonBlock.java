@@ -80,12 +80,12 @@ public class CombiAddonBlock extends MachineAddonBlock {
         if (usedSettings.energyBonusCapacity() != 0) {
             foundTexts.add(
               Component.translatable("tooltip.oritech.addon_capacity_desc").withStyle(ChatFormatting.DARK_GRAY)
-                .append(TooltipHelper.getFormattedEnergyChangeTooltip(usedSettings.energyBonusCapacity(), " RF")));
+                .append(TooltipHelper.getFormattedEnergyChangeTooltip(usedSettings.energyBonusCapacity(), " EU")));
         }
         
         if (usedSettings.energyBonusTransfer() != 0) {
             foundTexts.add(Component.translatable("tooltip.oritech.addon_transfer_desc").withStyle(ChatFormatting.DARK_GRAY)
-                          .append(TooltipHelper.getFormattedEnergyChangeTooltip(usedSettings.energyBonusTransfer(), " RF/t")));
+                          .append(TooltipHelper.getFormattedEnergyChangeTooltip(usedSettings.energyBonusTransfer(), " EU/t")));
         }
         
         if (usedSettings.maxBurstTicks() != 0) {

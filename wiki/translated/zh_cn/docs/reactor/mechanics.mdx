@@ -38,7 +38,7 @@ icon: oritech:area/reactor
 每刻能量与热量：
 
 ```
-能量 = 64 RF × 总脉冲 × stackHeight        （reactor.rfPerPulse = 64）
+能量 = 64 EU × 总脉冲 × stackHeight        （reactor.rfPerPulse = 64）
 热量 = (总脉冲 / 2 × 总脉冲 + 4) × heatHeightMult
 ```
 
@@ -78,15 +78,15 @@ icon: oritech:area/reactor
 回收能量 = 移除热量 × reactor.rfPerHeat × stackHeight      （reactor.rfPerHeat = 2）
 ```
 
-其 `recoveryRate` 默认为每个邻居每刻 8 点热量。注意这个不对称性：回收口每点热量赚 2 RF，
-而燃料棒在脉冲曲线高端每点热量约赚 `128 / 总脉冲` RF。36 脉冲时约为 3.5 RF/热量，
+其 `recoveryRate` 默认为每个邻居每刻 8 点热量。注意这个不对称性：回收口每点热量赚 2 EU，
+而燃料棒在脉冲曲线高端每点热量约赚 `128 / 总脉冲` EU。36 脉冲时约为 3.5 EU/热量，
 所以回收始终是补充手段，不可能成为主发电机。
 
 ## 能量输出
 
-- 燃料棒每刻向控制器内部缓存注入 `64 RF × 总脉冲 × stackHeight`。
-- 缓存容量为 `reactor.reactorMaxEnergyStored` = 50,000,000 RF。
-- 每个[能量端口](@oritech:reactor_energy_port)每刻最多向所朝方块输出 `reactor.reactorMaxEnergyOutput` = 25,000 RF/t。
+- 燃料棒每刻向控制器内部缓存注入 `64 EU × 总脉冲 × stackHeight`。
+- 缓存容量为 `reactor.reactorMaxEnergyStored` = 50,000,000 EU。
+- 每个[能量端口](@oritech:reactor_energy_port)每刻最多向所朝方块输出 `reactor.reactorMaxEnergyOutput` = 25,000 EU/t。
 - 端口每刻以随机顺序抽取，因此各端口的吞吐会被公平分摊。
 
 ## 红石与比较器
@@ -101,7 +101,7 @@ icon: oritech:area/reactor
 
 单层内部结构，`rfPerPulse = 64` 时：
 
-| 燃料棒 | 脉冲 | 热量/刻 | RF/刻 | RF 每点热量 |
+| 燃料棒 | 脉冲 | 热量/刻 | EU/刻 | EU 每点热量 |
 | --- | --- | --- | --- | --- |
 | 单联，孤立 | 1 | 4 | 32 | 8.0 |
 | 双联，孤立 | 4 | 12 | 128 | 10.7 |

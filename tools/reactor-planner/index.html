@@ -184,7 +184,7 @@
       <h2>历史曲线</h2>
       <canvas id="chart" width="640" height="260"></canvas>
       <div class="legend">
-        <span><i style="background:#4cc2ff"></i>RF/刻</span>
+        <span><i style="background:#4cc2ff"></i>EU/刻</span>
         <span><i style="background:#e5533d"></i>最热温度 K</span>
         <span><i style="background:#e3b341"></i>净热量 K/刻</span>
       </div>
@@ -587,9 +587,9 @@ function renderMetrics() {
   const add = (k, v, cls) => rows.push(`<span class="k">${k}</span><span class="v ${cls || ""}">${v}</span>`);
 
   add("燃料棒", last.activeRods + " / " + last.totalRods + " 工作中");
-  add("产能", fmt(last.energyProduced) + " RF/刻");
+  add("产能", fmt(last.energyProduced) + " EU/刻");
   if (last.energyFromRecovery > 0)
-    add("&#8627; 其中回收", fmt(last.energyFromRecovery) + " RF/刻（"
+    add("&#8627; 其中回收", fmt(last.energyFromRecovery) + " EU/刻（"
       + pct(last.energyFromRecovery, last.energyProduced) + ")");
   add("产热", "+" + fmt(last.heatProduced) + " K/刻");
   add("散热", "-" + fmt(last.heatRemoved) + " K/刻");
@@ -746,7 +746,7 @@ function showHover(td) {
     const mult = heatHeightMult();
     const heat = Math.trunc((idiv(pulses, 2) * pulses + 4) * mult);
     html += `<br>棒数 ${def.rodCount} &middot; 内部脉冲 ${def.internalPulses} &middot; 邻居：${rods} 根燃料棒，${refl} 个反射器`;
-    html += `<br>总脉冲 <b>${pulses}</b> &rarr; ${cfg.rfPerPulse * pulses * cfg.height} RF/刻 &middot; +${heat} K/刻`;
+    html += `<br>总脉冲 <b>${pulses}</b> &rarr; ${cfg.rfPerPulse * pulses * cfg.height} EU/刻 &middot; +${heat} K/刻`;
     html += `<br><span class="note">需要在上方天花板放置燃料口</span>`;
   }
   if (def.absorber)
@@ -754,7 +754,7 @@ function showHover(td) {
   if (def.vent)
     html += `<br>从最热的邻居移除 min(h/${cfg.ventRelativeRate} + ${cfg.ventBaseRate}, h)`;
   if (def.recovery)
-    html += `<br>每个邻居移除 ${cfg.recoveryRate} K，每个邻居产出 ${cfg.recoveryRate * cfg.rfPerHeat * cfg.height} RF/刻`;
+    html += `<br>每个邻居移除 ${cfg.recoveryRate} K，每个邻居产出 ${cfg.recoveryRate * cfg.rfPerHeat * cfg.height} EU/刻`;
   if (def.pipe)
     html += `<br>从更热的邻居吸取 min(差值/4 + 10, 差值)`;
   if (def.reflector)

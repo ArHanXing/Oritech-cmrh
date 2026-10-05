@@ -107,9 +107,9 @@ public class OritechStartupConfig {
         ElectricMaceConfig(ModConfigSpec.Builder b) {
             b.push("electricMace");
             energyCapacity = b.defineInRange("energyCapacity", 500_000L, 0L, Long.MAX_VALUE);
-            energyUsage = b.comment("RF consumed per hit").worldRestart().defineInRange("energyUsage", 2048, 0, Integer.MAX_VALUE);
+            energyUsage = b.comment("EU consumed per hit").worldRestart().defineInRange("energyUsage", 2048, 0, Integer.MAX_VALUE);
             chargeSpeed = b.defineInRange("chargeSpeed", 50_000, 0, Integer.MAX_VALUE);
-            lightningCostMultiplier = b.comment("Lightning attack RF usage multiplier").defineInRange("lightningCostMultiplier", 8, 0, Integer.MAX_VALUE);
+            lightningCostMultiplier = b.comment("Lightning attack EU usage multiplier").defineInRange("lightningCostMultiplier", 8, 0, Integer.MAX_VALUE);
             b.pop();
         }
     }
@@ -125,8 +125,8 @@ public class OritechStartupConfig {
         PortableLaserConfig(ModConfigSpec.Builder b) {
             b.push("portableLaserConfig");
             energyCapacity = b.defineInRange("energyCapacity", 5_000_000L, 0L, Long.MAX_VALUE);
-            energyPerTick = b.comment("RF consumed per tick while firing").defineInRange("energyPerTick", 4096, 0, Integer.MAX_VALUE);
-            energyPerBoom = b.comment("RF consumed per explosion").defineInRange("energyPerBoom", 100_000, 0, Integer.MAX_VALUE);
+            energyPerTick = b.comment("EU consumed per tick while firing").defineInRange("energyPerTick", 4096, 0, Integer.MAX_VALUE);
+            energyPerBoom = b.comment("EU consumed per explosion").defineInRange("energyPerBoom", 100_000, 0, Integer.MAX_VALUE);
             blockBreakSpeed = b.comment("Block breaking speed multiplier").defineInRange("blockBreakSpeed", 0.125, 0.0, 100.0);
             damageBase = b.comment("Base damage to entities").defineInRange("damageBase", 4, 0, Integer.MAX_VALUE);
             explosionStrength = b.comment("Explosion power").defineInRange("explosionStrength", 6, 0, Integer.MAX_VALUE);

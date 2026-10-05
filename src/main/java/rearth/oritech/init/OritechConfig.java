@@ -51,7 +51,7 @@ public class OritechConfig {
                                                                                .defineInRange("portableTankCapacityBuckets", 256, 1, Integer.MAX_VALUE);
     
     public static final ModConfigSpec.IntValue overchargedCrystalChargeRate = COMMON
-                                                                                .comment("Overcharged crystal energy generation rate in RF/t")
+                                                                                .comment("Overcharged crystal energy generation rate in EU/t")
                                                                                 .defineInRange("overchargedCrystalChargeRate", 10, 1, Integer.MAX_VALUE);
     
     static {
@@ -88,11 +88,11 @@ public class OritechConfig {
                                                                                       .defineInRange("fluidPipeInternalStorageBuckets", 2.0, 0.0, 1000.0);
     
     public static final ModConfigSpec.LongValue energyPipeTransferRate = COMMON
-                                                                           .comment("Energy pipe transfer rate in RF/t")
+                                                                           .comment("Energy pipe transfer rate in EU/t")
                                                                            .defineInRange("energyPipeTransferRate", 10_000L, 0L, Long.MAX_VALUE);
     
     public static final ModConfigSpec.LongValue superConductorTransferRate = COMMON
-                                                                               .comment("Superconductor cable transfer rate in RF/t")
+                                                                               .comment("Superconductor cable transfer rate in EU/t")
                                                                                .defineInRange("superConductorTransferRate", 4_194_304L, 0L, Long.MAX_VALUE);
     
     public static final PowerPoleConfig poleConfig = new PowerPoleConfig(COMMON);
@@ -148,17 +148,17 @@ public class OritechConfig {
                                                            .defineInRange("maxSize", 64, 1, Integer.MAX_VALUE);
     
     public static final ModConfigSpec.IntValue reactorMaxEnergyStored = COMMON
-                                                                          .comment("Maximum energy stored in the reactor in RF")
+                                                                          .comment("Maximum energy stored in the reactor in EU")
                                                                           .worldRestart()
                                                                           .defineInRange("reactorMaxEnergyStored", 50_000_000, 0, Integer.MAX_VALUE);
     
     public static final ModConfigSpec.IntValue reactorMaxEnergyOutput = COMMON
-                                                                          .comment("Maximum energy output in RF/t per energy port")
+                                                                          .comment("Maximum energy output in EU/t per energy port")
                                                                           .worldRestart()
                                                                           .defineInRange("reactorMaxEnergyOutput", 25_000, 0, Integer.MAX_VALUE);
     
     public static final ModConfigSpec.IntValue rfPerPulse = COMMON
-                                                              .comment("RF generated per reactor pulse")
+                                                              .comment("EU generated per reactor pulse")
                                                               .worldRestart()
                                                               .defineInRange("rfPerPulse", 64, 0, Integer.MAX_VALUE);
     
@@ -188,7 +188,7 @@ public class OritechConfig {
                                                                  .defineInRange("recoveryRate", 8, 0, Integer.MAX_VALUE);
     
     public static final ModConfigSpec.IntValue rfPerHeat = COMMON
-                                                              .comment("RF generated per heat removed by a heat recovery port. Keep this at or below 128 / (max rod pulse count) to avoid heat farming")
+                                                              .comment("EU generated per heat removed by a heat recovery port. Keep this at or below 128 / (max rod pulse count) to avoid heat farming")
                                                               .worldRestart()
                                                               .defineInRange("rfPerHeat", 2, 0, Integer.MAX_VALUE);
     
@@ -224,7 +224,7 @@ public class OritechConfig {
                                                                      .defineInRange("catalystBaseSouls", 50, 0, Integer.MAX_VALUE);
     
     public static final ModConfigSpec.IntValue catalystRFPerSoul = COMMON
-                                                                     .comment("RF/t per catalyst soul capacity level increase")
+                                                                     .comment("EU/t per catalyst soul capacity level increase")
                                                                      .defineInRange("catalystRFPerSoul", 20, 0, Integer.MAX_VALUE);
     
     public static final ModConfigSpec.IntValue catalystCostMultiplier = COMMON
@@ -261,11 +261,11 @@ public class OritechConfig {
                                                                  .defineInRange("bendFactor", 2.5, 0.0, 100.0);
     
     public static final ModConfigSpec.IntValue accelerationRFCost = COMMON
-                                                                      .comment("Base RF cost per particle acceleration step")
+                                                                      .comment("Base EU cost per particle acceleration step")
                                                                       .defineInRange("accelerationRFCost", 10, 0, Integer.MAX_VALUE);
     
     public static final ModConfigSpec.LongValue acceleratorMotorRFCapacity = COMMON
-                                                                               .comment("Accelerator motor RF storage capacity")
+                                                                               .comment("Accelerator motor EU storage capacity")
                                                                                .defineInRange("acceleratorMotorRFCapacity", 5_000_000L, 0L, Long.MAX_VALUE);
     
     public static final ModConfigSpec.IntValue endPortalRequiredSpeed = COMMON
@@ -281,11 +281,11 @@ public class OritechConfig {
                                                                           .defineInRange("blackHoleRequiredSpeed", 15_000, 0, Integer.MAX_VALUE);
     
     public static final ModConfigSpec.IntValue collectorEnergyStorage = COMMON
-                                                                          .comment("Tachyon collector energy capacity in RF")
+                                                                          .comment("Tachyon collector energy capacity in EU")
                                                                           .defineInRange("collectorEnergyStorage", 1_000_000, 0, Integer.MAX_VALUE);
     
     public static final ModConfigSpec.DoubleValue tachyonCollisionEnergyFactor = COMMON
-                                                                                   .comment("Particle collision tachyon RF multiplier")
+                                                                                   .comment("Particle collision tachyon EU multiplier")
                                                                                    .defineInRange("tachyonCollisionEnergyFactor", 1.0, 0.0, 100.0);
     
     static {
@@ -314,7 +314,7 @@ public class OritechConfig {
                                                                           .defineInRange("blackHoleTachyonEnergy", 50_000, 0, Integer.MAX_VALUE);
     
     public static final ModConfigSpec.LongValue unstableContainerBaseCapacity = COMMON
-                                                                                  .comment("Unstable container base RF storage capacity")
+                                                                                  .comment("Unstable container base EU storage capacity")
                                                                                   .worldRestart()
                                                                                   .defineInRange("unstableContainerBaseCapacity", 20_000_000L, 0L, Long.MAX_VALUE);
     
@@ -418,7 +418,7 @@ public class OritechConfig {
             energyCapacity = b.defineInRange("energyCapacity", 20_000L, 0L, Long.MAX_VALUE);
             maxEnergyInsertion = b.defineInRange("maxEnergyInsertion", 128L * 8, 0L, Long.MAX_VALUE);
             energyPerTick = b.defineInRange("energyPerTick", 128L, 0L, Long.MAX_VALUE);
-            blockBreakEnergyBase = b.comment("Base RF cost to break a block").defineInRange("blockBreakEnergyBase", 1024, 0, Integer.MAX_VALUE);
+            blockBreakEnergyBase = b.comment("Base EU cost to break a block").defineInRange("blockBreakEnergyBase", 1024, 0, Integer.MAX_VALUE);
             damageTickBase = b.comment("Base damage per tick to entities").defineInRange("damageTickBase", 2.0, 0.0, 1000.0);
             range = b.comment("Maximum targeting range in blocks").defineInRange("range", 128, 1, Integer.MAX_VALUE);
             b.pop();
@@ -434,7 +434,7 @@ public class OritechConfig {
             b.push("deepDrillConfig");
             energyCapacity = b.defineInRange("energyCapacity", 20_000L, 0L, Long.MAX_VALUE);
             stepsPerOre = b.comment("Work steps required per ore output").defineInRange("stepsPerOre", 20, 1, Integer.MAX_VALUE);
-            energyPerStep = b.comment("RF consumed per work step").defineInRange("energyPerStep", 1024, 0, Integer.MAX_VALUE);
+            energyPerStep = b.comment("EU consumed per work step").defineInRange("energyPerStep", 1024, 0, Integer.MAX_VALUE);
             b.pop();
         }
     }
@@ -448,7 +448,7 @@ public class OritechConfig {
             b.push("addonConfig");
             burstAddonSpeedMultiplier = b.comment("Burst addon processing speed multiplier").defineInRange("burstAddonSpeedMultiplier", 8.0, 0.0, 1000.0);
             burstAddonThrottleMultiplier = b.comment("Burst addon throttle energy multiplier").defineInRange("burstAddonThrottleMultiplier", 1.2, 0.0, 100.0);
-            addonShrinkerRF = b.comment("Addon splicer RF storage capacity").defineInRange("addonShrinkerRF", 50_000_000L, 0L, Long.MAX_VALUE);
+            addonShrinkerRF = b.comment("Addon splicer EU storage capacity").defineInRange("addonShrinkerRF", 50_000_000L, 0L, Long.MAX_VALUE);
             b.pop();
         }
     }
@@ -460,7 +460,7 @@ public class OritechConfig {
         
         PowerPoleConfig(ModConfigSpec.Builder b) {
             b.push("poleConfig");
-            energyCapacity = b.comment("Energy transmission rate and capacity in RF/t").defineInRange("energyCapacity", 1_000_000L, 0L, Long.MAX_VALUE);
+            energyCapacity = b.comment("Energy transmission rate and capacity in EU/t").defineInRange("energyCapacity", 1_000_000L, 0L, Long.MAX_VALUE);
             minRange = b.comment("Minimum separation distance between poles").defineInRange("minRange", 50, 0, Integer.MAX_VALUE);
             maxRange = b.comment("Maximum separation distance between poles").defineInRange("maxRange", 1000, 0, Integer.MAX_VALUE);
             b.pop();
@@ -530,7 +530,7 @@ public class OritechConfig {
             b.push("steamEngineData");
             energyCapacity = b.defineInRange("energyCapacity", 100_000L, 0L, Long.MAX_VALUE);
             maxEnergyExtraction = b.defineInRange("maxEnergyExtraction", 50_000L, 0L, Long.MAX_VALUE);
-            rfToSteamRatio = b.comment("Applies to generators with the steam addon. Droplets of steam produced per the usual RF.").defineInRange("rfToSteamRatio", 2.0, 0.0, 1000.0);
+            rfToSteamRatio = b.comment("Applies to generators with the steam addon. Droplets of steam produced per the usual EU.").defineInRange("rfToSteamRatio", 2.0, 0.0, 1000.0);
             steamToRfRatio = b.comment("Energy per steam unit in the steam engine").defineInRange("steamToRfRatio", 1, 0, Integer.MAX_VALUE);
             stopOnEnergyFull = b.comment("When enabled, the steam engine stops when energy storage is full").define("stopOnEnergyFull", false);
             stopOnWaterFull = b.comment("When enabled, the steam engine stops when the water tank is full. Must be pumped out to resume.").define("stopOnWaterFull", true);

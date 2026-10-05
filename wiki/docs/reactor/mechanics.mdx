@@ -39,7 +39,7 @@ Pulses are what actually drive both power and heat:
 Energy and heat per tick:
 
 ```
-energy = 64 RF * totalPulses * stackHeight        (reactor.rfPerPulse = 64)
+energy = 64 EU * totalPulses * stackHeight        (reactor.rfPerPulse = 64)
 heat   = (totalPulses / 2 * totalPulses + 4) * heatHeightMult
 ```
 
@@ -77,15 +77,15 @@ The [heat recovery port](@oritech:reactor_recovery) is the only component that t
 recovered energy = removedHeat * reactor.rfPerHeat * stackHeight      (reactor.rfPerHeat = 2)
 ```
 
-Its default `recoveryRate` is 8 heat per neighbor per tick. Note the asymmetry: a recovery port earns 2 RF per heat,
-while a rod at the top of its pulse curve earns roughly `128 / totalPulses` RF per heat. At 36 pulses that is ~3.5 RF/heat,
+Its default `recoveryRate` is 8 heat per neighbor per tick. Note the asymmetry: a recovery port earns 2 EU per heat,
+while a rod at the top of its pulse curve earns roughly `128 / totalPulses` EU per heat. At 36 pulses that is ~3.5 EU/heat,
 so recovery is a supplement, never the main generator.
 
 ## Energy output
 
-- Rods insert `64 RF * totalPulses * stackHeight` into the controller's internal buffer each tick.
-- The buffer holds `reactor.reactorMaxEnergyStored` = 50,000,000 RF.
-- Each [energy port](@oritech:reactor_energy_port) pushes up to `reactor.reactorMaxEnergyOutput` = 25,000 RF/t to the block it faces.
+- Rods insert `64 EU * totalPulses * stackHeight` into the controller's internal buffer each tick.
+- The buffer holds `reactor.reactorMaxEnergyStored` = 50,000,000 EU.
+- Each [energy port](@oritech:reactor_energy_port) pushes up to `reactor.reactorMaxEnergyOutput` = 25,000 EU/t to the block it faces.
 - Ports are drained in random order every tick, so throughput is shared fairly between them.
 
 ## Redstone and comparators
@@ -99,7 +99,7 @@ A [redstone port](@oritech:reactor_redstone_port) does two things:
 
 For a single interior layer, with `rfPerPulse = 64`:
 
-| Rod | Pulses | Heat/t | RF/t | RF per heat |
+| Rod | Pulses | Heat/t | EU/t | EU per heat |
 | --- | --- | --- | --- | --- |
 | Single, alone | 1 | 4 | 32 | 8.0 |
 | Double, alone | 4 | 12 | 128 | 10.7 |

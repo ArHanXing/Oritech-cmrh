@@ -273,12 +273,12 @@ public class MachineAddonBlock extends FaceAttachedHorizontalDirectionalBlock im
             if (addonSettings.addedCapacity() != 0) {
                 tooltip.add(
                   Component.translatable("tooltip.oritech.addon_capacity_desc").withStyle(ChatFormatting.DARK_GRAY)
-                    .append(TooltipHelper.getFormattedEnergyChangeTooltip(addonSettings.addedCapacity(), " RF")));
+                    .append(TooltipHelper.getFormattedEnergyChangeTooltip(addonSettings.addedCapacity(), " EU")));
             }
             
             if (addonSettings.addedInsert() != 0) {
                 tooltip.add(Component.translatable("tooltip.oritech.addon_transfer_desc").withStyle(ChatFormatting.DARK_GRAY)
-                              .append(TooltipHelper.getFormattedEnergyChangeTooltip(addonSettings.addedInsert(), " RF/t")));
+                              .append(TooltipHelper.getFormattedEnergyChangeTooltip(addonSettings.addedInsert(), " EU/t")));
             }
             
             var item = (BlockItem) stack.getItem();
