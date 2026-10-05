@@ -273,13 +273,13 @@ public class ReactorControllerBlockEntity extends NetworkedBlockEntity implement
                 // unlike the absorber this needs no external coolant: the removed heat is
                 // converted straight into energy on the controller's own storage.
                 var sumRemovedHeat = 0;
-                for (var neighbor : getNeighborsInBounds(localPos, activeComponents.keySet())) {
-                    var neighborHeat = componentHeats.get(neighbor);
+                for (var neighbor : simulationComponent.neighbors) {
+                    var neighborHeat = neighbor.heat;
                     if (neighborHeat <= 0) continue;
                     var removed = Math.min(RECOVERY_RATE, neighborHeat);
                     neighborHeat -= removed;
                     sumRemovedHeat += removed;
-                    componentHeats.put(neighbor, neighborHeat);
+                    neighbor.heat = neighborHeat;
                 }
                 
                 // energy is a "total over the whole stack" unit, so it scales with the height
