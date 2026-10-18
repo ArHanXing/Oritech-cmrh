@@ -126,12 +126,12 @@ public enum OritechMachineRecipeProvider implements IBlockComponentProvider, ISe
         var lookup = accessor.getLevel().registryAccess();
         var recipeTag = new CompoundTag();
 
-        // item inputs: one representative stack per ingredient
+        // item inputs: one representative stack per ingredient, carrying the required amount
         var inputs = new ListTag();
         for (var ingredient : recipe.getInputs()) {
-            var matching = ingredient.getItems();
+            var matching = ingredient.ingredient().getItems();
             if (matching.length == 0) continue;
-            inputs.add(matching[0].copyWithCount(1).save(lookup));
+            inputs.add(matching[0].copyWithCount(ingredient.count()).save(lookup));
         }
         recipeTag.put(RECIPE_INPUTS, inputs);
 

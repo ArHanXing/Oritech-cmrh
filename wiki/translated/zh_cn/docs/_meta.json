@@ -1,10 +1,11 @@
 {
   "getting_started": {
-    "name": "\uD83D\uDCD5 起步",
+    "name": "📕 起步",
     "icon": null
   },
   "multiblocks.mdx": "多方块结构",
   "addons.mdx": "插件",
+  "custom_recipes.mdx": "自定义机器配方",
   "particle_accelerator.mdx": "粒子加速器",
   "reactor": {
     "name": "☢ 裂变反应堆",

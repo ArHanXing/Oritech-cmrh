@@ -28,6 +28,7 @@ import rearth.oritech.util.InventorySlotAssignment;
 import rearth.oritech.util.ScreenProvider;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -126,11 +127,17 @@ public class OritechJeiRecipeCategory implements IRecipeCategory<OritechRecipe> 
         var inputs = recipe.getInputs();
         for (int i = 0; i < inputs.size(); i++) {
             var input = inputs.get(i);
-            if (input.isEmpty()) continue;
+            var matchingStacks = input.ingredient().getItems();
+            if (matchingStacks.length == 0) continue;
+            
+            // carry the count on the stacks so JEI renders the amount overlay
+            var stacks = Arrays.stream(matchingStacks)
+                           .map(stack -> stack.copyWithCount(input.count()))
+                           .toList();
             
             var pos = slots.get(slotOffsets.inputStart() + i);
             var usedY = Math.clamp(2, pos.y() - offsetY, getHeight() - 18 - 4);
-            builder.addInputSlot(pos.x() - offsetX, usedY).addIngredients(input).setBackground(background, -1, -1);
+            builder.addInputSlot(pos.x() - offsetX, usedY).addItemStacks(stacks).setBackground(background, -1, -1);
         }
         
         // fluid inputs

@@ -8,6 +8,7 @@ import me.shedaniel.rei.api.common.util.EntryIngredients;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import rearth.oritech.init.recipes.OritechRecipe;
 
+import java.util.Arrays;
 import java.util.List;
 
 // holds the recipe data, which is then utilized by the different categories
@@ -21,7 +22,10 @@ public class OritechDisplay implements Display {
     
     @Override
     public List<EntryIngredient> getInputEntries() {
-        return CollectionUtils.map(entry.value().getInputs(), EntryIngredients::ofIngredient);
+        return CollectionUtils.map(entry.value().getInputs(), ingredient ->
+          EntryIngredients.ofItemStacks(Arrays.stream(ingredient.ingredient().getItems())
+                                        .map(stack -> stack.copyWithCount(ingredient.count()))
+                                        .toList()));
     }
     
     @Override

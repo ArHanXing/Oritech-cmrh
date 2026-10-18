@@ -36,7 +36,7 @@ public class OritechEMIRecipe extends BasicEmiRecipe {
         super(category, entry.id(),  150, 69);
         
         recipe = entry.value();
-        recipe.getInputs().forEach(ingredient -> this.inputs.add(EmiIngredient.of(ingredient)));
+        recipe.getInputs().forEach(ingredient -> this.inputs.add(EmiIngredient.of(ingredient.ingredient(), ingredient.count())));
         recipe.getResults().forEach(stack -> this.outputs.add(EmiStack.of(stack)));
         
         if (recipe.getFluidInput() != null && recipe.getFluidInput().amount() > 0) {
@@ -75,7 +75,7 @@ public class OritechEMIRecipe extends BasicEmiRecipe {
           80, 35, 29, 16, true);
         
         recipe = entry.value();
-        recipe.getInputs().forEach(ingredient -> this.inputs.add(EmiIngredient.of(ingredient)));
+        recipe.getInputs().forEach(ingredient -> this.inputs.add(EmiIngredient.of(ingredient.ingredient(), ingredient.count())));
         recipe.getResults().forEach(stack -> this.outputs.add(EmiStack.of(stack)));
         
         if (recipe.getFluidInput() != null && recipe.getFluidInput().amount() > 0) {

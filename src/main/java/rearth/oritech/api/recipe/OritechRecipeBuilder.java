@@ -15,6 +15,7 @@ import rearth.oritech.Oritech;
 import rearth.oritech.init.recipes.OritechRecipe;
 import rearth.oritech.init.recipes.OritechRecipeType;
 import rearth.oritech.util.FluidIngredient;
+import rearth.oritech.util.SizedIngredient;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +23,7 @@ import java.util.List;
 public abstract class OritechRecipeBuilder {
 
     protected final OritechRecipeType type;
-    protected List<Ingredient> inputs;
+    protected List<SizedIngredient> inputs;
     protected List<ItemStack> results;
     protected FluidIngredient fluidInput;
     protected List<FluidStack> fluidOutputs;
@@ -37,26 +38,46 @@ public abstract class OritechRecipeBuilder {
         this.fluidOutputs = new ArrayList<>();
     }
 
-    public OritechRecipeBuilder input(List<Ingredient> in) {
+    /** Adds inputs that already carry their count. Named differently to avoid an erasure clash with {@link #input(List)}. */
+    public OritechRecipeBuilder sizedInputs(List<SizedIngredient> in) {
         if (inputs == null)
             inputs = new ArrayList<>();
         inputs.addAll(in);
         return this;
     }
 
-    public OritechRecipeBuilder input(Ingredient in) {
+    public OritechRecipeBuilder input(List<Ingredient> in) {
         if (inputs == null)
             inputs = new ArrayList<>();
-        inputs.add(in);
+        in.forEach(ingredient -> inputs.add(new SizedIngredient(1, ingredient)));
+        return this;
+    }
+
+    public OritechRecipeBuilder input(Ingredient in) {
+        return input(in, 1);
+    }
+    
+    public OritechRecipeBuilder input(Ingredient in, int count) {
+        if (inputs == null)
+            inputs = new ArrayList<>();
+        inputs.add(new SizedIngredient(Math.max(1, count), in));
         return this;
     }
 
     public OritechRecipeBuilder input(ItemLike in) {
-        return input(Ingredient.of(in));
+        return input(Ingredient.of(in), 1);
+    }
+    
+    public OritechRecipeBuilder input(ItemLike in, int count) {
+        return input(Ingredient.of(in), count);
     }
 
     public OritechRecipeBuilder input(TagKey<Item> in) {
-        return input(Ingredient.of(in));
+        return input(Ingredient.of(in), 1);
+    }
+    
+    public OritechRecipeBuilder input(TagKey<Item> in, int count) {
+        return input(Ingredient.of(in), count);
     }
 
     public OritechRecipeBuilder fluidInput(FluidIngredient in) {

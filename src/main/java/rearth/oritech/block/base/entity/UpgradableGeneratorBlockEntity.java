@@ -107,9 +107,10 @@ public abstract class UpgradableGeneratorBlockEntity extends UpgradableMachineBl
             progress = recipeTime;
             currentMaxBurnTime = recipeTime;
             
-            // remove inputs
+            // remove inputs, respecting the amount each ingredient asks for
             for (int i = 0; i < activeRecipe.getInputs().size(); i++) {
-                var taken = ContainerHelper.removeItem(getInputView(), i, 1);  // amount is not configurable, because ingredient doesn't parse amount in recipe
+                var ingredient = activeRecipe.getInputs().get(i);
+                ContainerHelper.removeItem(getInputView(), i, ingredient.count());
             }
             pendingOutputs = new ArrayList<>(activeRecipe.getResults());
             

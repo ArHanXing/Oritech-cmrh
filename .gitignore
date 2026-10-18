@@ -37,6 +37,10 @@ src/main/generated/.cache/
 run/
 */run/
 
+# logs
+
+logs/
+
 # java
 
 hs_err_*.log

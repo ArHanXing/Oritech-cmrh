@@ -1,0 +1,49 @@
+---
+title: Custom Machine Recipes
+icon: oritech:area/reactor
+---
+
+Oritech machine recipes live in a datapack at `data/<namespace>/recipe/<name>.json`. The shape is shared by
+every processing machine, only the `type` changes.
+
+```json
+{
+  "type": "oritech:pulverizer",
+  "ingredients": [
+    { "item": "minecraft:iron_ingot", "count": 4 },
+    { "tag": "c:ingots/steel" }
+  ],
+  "results": [
+    { "id": "minecraft:iron_block", "count": 1 }
+  ],
+  "time": 200
+}
+```
+
+## Ingredient counts
+
+An ingredient is either an item or a tag, and it accepts an optional `count`:
+
+- `"count"` is **optional** and defaults to `1`, so all pre-existing recipes keep working unchanged.
+- When a recipe asks for more than one item, the machine pulls the full amount out of its input slots,
+  spreading it over several slots if needed (four iron ingots may come from two slots of two).
+- A recipe is only considered valid when the whole amount is present, and the amount is consumed in one craft.
+- The recipe viewers (EMI, REI, JEI) and the in-game Jade tooltip show the amount, so a `count` of 4 is
+  displayed as a stack of four.
+- `count` only governs how many items a craft consumes. It does not change how many are produced; use
+  `results` for that.
+
+The fluid input (`fluidInput`) has its own `amount` field, measured in droplets (1000 = one bucket).
+
+## Machines that use item inputs
+
+The item input rules above apply to every machine that reads `ingredients`, including the
+[pulverizer](@oritech:pulverizer_block), [fragment forge](@oritech:fragment_forge_block) (the
+`oritech:grinder` type), [foundry](@oritech:foundry_block), [centrifuge](@oritech:centrifuge_block),
+[refinery](@oritech:refinery_block), [assembler](@oritech:assembler_block),
+[atomic forge](@oritech:atomic_forge_block), [powered furnace](@oritech:powered_furnace_block),
+[cooler](@oritech:cooler_block) and the
+[fuel](@oritech:fuel_generator_block)/[bio](@oritech:bio_generator_block) generators.
+
+Generators consume the requested amount from the matching slot when they start burning a batch, so a
+generator recipe can also ask for several items at once.

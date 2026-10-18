@@ -4,7 +4,9 @@ import dev.architectury.fluid.FluidStack;
 import org.jetbrains.annotations.Nullable;
 import rearth.oritech.util.FluidIngredient;
 import rearth.oritech.util.SimpleCraftingInventory;
+import rearth.oritech.util.SizedIngredient;
 
+import java.util.Arrays;
 import java.util.List;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
@@ -21,18 +23,18 @@ import net.minecraft.world.level.material.Fluid;
 public class OritechRecipe implements Recipe<RecipeInput> {
     
     protected final OritechRecipeType type;
-    protected final List<Ingredient> inputs;
+    protected final List<SizedIngredient> inputs;
     protected final List<ItemStack> results;
     protected final FluidIngredient fluidInput;
     protected final List<FluidStack> fluidOutputs;
     protected final int time;
 
-    public static final OritechRecipe DUMMY = new OritechRecipe(-1, NonNullList.withSize(1, Ingredient.of(Items.IRON_INGOT.getDefaultInstance())), NonNullList.withSize(1, Items.IRON_BLOCK.getDefaultInstance()), RecipeContent.PULVERIZER, FluidIngredient.EMPTY, FluidStack.empty());
+    public static final OritechRecipe DUMMY = new OritechRecipe(-1, List.of(new SizedIngredient(1, Ingredient.of(Items.IRON_INGOT.getDefaultInstance()))), NonNullList.withSize(1, Items.IRON_BLOCK.getDefaultInstance()), RecipeContent.PULVERIZER, FluidIngredient.EMPTY, FluidStack.empty());
     
-    public OritechRecipe(int time, List<Ingredient> inputs, List<ItemStack> results, OritechRecipeType type, @Nullable FluidIngredient fluidInput, @Nullable FluidStack fluidOutput) {
+    public OritechRecipe(int time, List<SizedIngredient> inputs, List<ItemStack> results, OritechRecipeType type, @Nullable FluidIngredient fluidInput, @Nullable FluidStack fluidOutput) {
         this(time, inputs, results, type, fluidInput, (fluidOutput == null || fluidOutput.isEmpty()) ? List.of() : List.of(fluidOutput));
     }
-    public OritechRecipe(int time, List<Ingredient> inputs, List<ItemStack> results, OritechRecipeType type, @Nullable FluidIngredient fluidInput, List<FluidStack> fluidOutputs) {
+    public OritechRecipe(int time, List<SizedIngredient> inputs, List<ItemStack> results, OritechRecipeType type, @Nullable FluidIngredient fluidInput, List<FluidStack> fluidOutputs) {
         this.type = type;
         this.results = results;
         this.inputs = inputs;
@@ -42,11 +44,11 @@ public class OritechRecipe implements Recipe<RecipeInput> {
         this.fluidOutputs = fluidOutputs;
     }
 
-    public OritechRecipe(int time, List<Ingredient> inputs, List<ItemStack> results, OritechRecipeType type, @Nullable FluidIngredient fluidInput, Fluid outVariant, long outAmount) {
+    public OritechRecipe(int time, List<SizedIngredient> inputs, List<ItemStack> results, OritechRecipeType type, @Nullable FluidIngredient fluidInput, Fluid outVariant, long outAmount) {
         this(time, inputs, results, type, fluidInput, FluidStack.create(outVariant, outAmount));
     }
     
-    public OritechRecipe(int time, List<Ingredient> inputs, List<ItemStack> results, OritechRecipeType type, Fluid inVariant, long inAmount, Fluid outVariant, long outAmount) {
+    public OritechRecipe(int time, List<SizedIngredient> inputs, List<ItemStack> results, OritechRecipeType type, Fluid inVariant, long inAmount, Fluid outVariant, long outAmount) {
         this(time, inputs, results, type, new FluidIngredient().withContent(inVariant).withAmount(inAmount), FluidStack.create(outVariant, outAmount));
     }
     
@@ -56,7 +58,8 @@ public class OritechRecipe implements Recipe<RecipeInput> {
         
         if (world.isClientSide) return false;
         
-        if (inputs.size() > 1) {
+        // recipes that need more than one item (or more than one stack) may draw from any input slot
+        if (inputs.size() > 1 || isSized()) {
             return complexMatch(input);
         }
         
@@ -82,18 +85,8 @@ public class OritechRecipe implements Recipe<RecipeInput> {
         var copiedInv = simpleInventory.getItems().stream().map(ItemStack::copy).toArray(ItemStack[]::new);
         
         for (var ingredient : getInputs()) {
-            
-            var found = false;
-            
-            for (var heldStack : copiedInv) {
-                if (ingredient.test(heldStack)) {
-                    heldStack.shrink(1);
-                    found = true;
-                    break;
-                }
-            }
-            
-            if (!found) return false;
+            if (!ingredient.consume(Arrays.asList(copiedInv), true))
+                return false;
         }
         
         return true;
@@ -144,14 +137,27 @@ public class OritechRecipe implements Recipe<RecipeInput> {
         return time;
     }
     
-    public List<Ingredient> getInputs() {
+    public List<SizedIngredient> getInputs() {
         return inputs;
+    }
+    
+    /** Plain ingredients, for recipe viewers and other places that do not care about counts. */
+    public List<Ingredient> getInputIngredients() {
+        return inputs.stream().map(SizedIngredient::ingredient).toList();
+    }
+    
+    /** True when any input needs more than a single item. */
+    public boolean isSized() {
+        for (var input : inputs) {
+            if (input.count() > 1) return true;
+        }
+        return false;
     }
 
     // do not use this one, use getInputs if applicable to avoid unnecessary copy
     @Override
     public NonNullList<Ingredient> getIngredients() {
-        return NonNullList.of(Ingredient.EMPTY, inputs.toArray(Ingredient[]::new));
+        return NonNullList.of(Ingredient.EMPTY, getInputIngredients().toArray(Ingredient[]::new));
     }
 
     public List<ItemStack> getResults() {

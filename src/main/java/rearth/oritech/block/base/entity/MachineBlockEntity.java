@@ -167,20 +167,20 @@ public abstract class MachineBlockEntity extends NetworkedBlockEntity
             }
         }
         
-        // remove inputs. Each input is 1 ingredient.
+        // remove inputs. A sized input takes its full count, which may be spread over several slots.
         var startOffset = 0;    // used so when multiple matching stacks are available, they're drained somewhat evenly
         for (var removedIng : inputs) {
-            // try to find current ingredient
-            for (int i = 0; i < inputInventory.size(); i++) {
+            var remaining = removedIng.count();
+            // try to find the current ingredient
+            for (int i = 0; i < inputInventory.size() && remaining > 0; i++) {
                 var inputStack = inputInventory.get((i + startOffset) % inputInventory.size());
-                if (removedIng.test(inputStack)) {
-                    inputStack.shrink(1);
-                    startOffset++;
-                    break;
-                }
+                if (!removedIng.ingredient().test(inputStack)) continue;
+                
+                var taken = Math.min(remaining, inputStack.getCount());
+                inputStack.shrink(taken);
+                remaining -= taken;
+                startOffset++;
             }
-            
-            
         }
         
     }

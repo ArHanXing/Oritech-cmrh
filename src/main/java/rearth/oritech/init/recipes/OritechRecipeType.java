@@ -6,6 +6,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.architectury.fluid.FluidStack;
 import rearth.oritech.api.networking.NetworkManager;
 import rearth.oritech.util.FluidIngredient;
+import rearth.oritech.util.SizedIngredient;
 
 import java.util.List;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -27,7 +28,7 @@ public class OritechRecipeType implements RecipeSerializer<OritechRecipe>, Recip
     
     public static final MapCodec<OritechRecipe> ORI_RECIPE_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
       Codec.INT.optionalFieldOf("time", 60).forGetter(OritechRecipe::getTime),
-      Ingredient.CODEC_NONEMPTY.listOf().fieldOf("ingredients").forGetter(OritechRecipe::getInputs),
+      SizedIngredient.FLAT_CODEC.listOf().fieldOf("ingredients").forGetter(OritechRecipe::getInputs),
       ItemStack.CODEC.listOf().fieldOf("results").forGetter(OritechRecipe::getResults),
       ResourceLocation.CODEC.xmap(identifier1 -> (OritechRecipeType) BuiltInRegistries.RECIPE_TYPE.get(identifier1), OritechRecipeType::getIdentifier).fieldOf("type").forGetter(OritechRecipe::getOriType),
       FluidIngredient.CODEC.optionalFieldOf("fluidInput", FluidIngredient.EMPTY).forGetter(OritechRecipe::getFluidInput),
@@ -36,7 +37,7 @@ public class OritechRecipeType implements RecipeSerializer<OritechRecipe>, Recip
     
     public static final StreamCodec<RegistryFriendlyByteBuf, OritechRecipe> PACKET_CODEC = StreamCodec.composite(
       ByteBufCodecs.INT, OritechRecipe::getTime,
-      Ingredient.CONTENTS_STREAM_CODEC.apply(ByteBufCodecs.list()), OritechRecipe::getInputs,
+      SizedIngredient.PACKET_CODEC.apply(ByteBufCodecs.list()), OritechRecipe::getInputs,
       ItemStack.OPTIONAL_LIST_STREAM_CODEC, OritechRecipe::getResults,
       ResourceLocation.STREAM_CODEC.map(identifier1 -> (OritechRecipeType) BuiltInRegistries.RECIPE_TYPE.get(identifier1), OritechRecipeType::getIdentifier), OritechRecipe::getOriType,
       FluidIngredient.PACKET_CODEC, OritechRecipe::getFluidInput,

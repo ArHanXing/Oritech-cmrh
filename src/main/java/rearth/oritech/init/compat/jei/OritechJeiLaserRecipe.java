@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import rearth.oritech.Oritech;
 import rearth.oritech.init.BlockContent;
 import rearth.oritech.init.recipes.OritechRecipe;
+import rearth.oritech.util.SizedIngredient;
 import rearth.oritech.init.recipes.OritechRecipeType;
 import rearth.oritech.init.recipes.RecipeContent;
 
@@ -80,7 +81,13 @@ public class OritechJeiLaserRecipe implements IRecipeCategory<OritechRecipe> {
         
         var inputs = recipe.getInputs();
         
-        builder.addInputSlot(80, 15).addIngredients(inputs.get(0)).setBackground(background, -1, -1);
+        builder.addInputSlot(80, 15).addItemStacks(sizedStacks(inputs.get(0))).setBackground(background, -1, -1);
         builder.addOutputSlot(135, 15).addItemStack(recipe.getResults().get(0)).setBackground(background, -1, -1);
+    }
+
+    private static java.util.List<net.minecraft.world.item.ItemStack> sizedStacks(SizedIngredient ingredient) {
+        return java.util.Arrays.stream(ingredient.ingredient().getItems())
+                 .map(stack -> stack.copyWithCount(ingredient.count()))
+                 .toList();
     }
 }

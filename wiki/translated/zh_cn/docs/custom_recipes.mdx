@@ -1,0 +1,44 @@
+---
+title: 自定义机器配方
+icon: oritech:area/reactor
+---
+
+Oritech 的机器配方放在数据包的 `data/<命名空间>/recipe/<名称>.json`。所有加工机器共用同一套结构，只有 `type` 不同。
+
+```json
+{
+  "type": "oritech:pulverizer",
+  "ingredients": [
+    { "item": "minecraft:iron_ingot", "count": 4 },
+    { "tag": "c:ingots/steel" }
+  ],
+  "results": [
+    { "id": "minecraft:iron_block", "count": 1 }
+  ],
+  "time": 200
+}
+```
+
+## 输入数量
+
+每个输入项要么是物品、要么是标签，并且可以带一个可选的 `count`：
+
+- `count` **可以省略**，默认是 `1`，所以所有既有配方都保持原样有效。
+- 当配方要求多于 1 个物品时，机器会把总量从输入槽中取出，必要时**跨多个槽**（比如 4 个铁锭可以来自两个各装 2 个的槽）。
+- 只有总量足够时配方才会被认为匹配，并且一次合成会把总量全部消耗。
+- 配方查看器（EMI、REI、JEI）以及游戏内的 Jade 提示都会显示数量，所以 `count` 为 4 会显示成一组 4 个。
+- `count` 只决定一次合成**消耗**多少，不决定产出多少；产出请写 `results`。
+
+流体输入（`fluidInput`）有自己的 `amount` 字段，单位是液滴（1000 = 一桶）。
+
+## 使用物品输入的机器
+
+上述输入规则对所有读取 `ingredients` 的机器都生效，包括
+[磨粉机](@oritech:pulverizer_block)、[碎裂锻造器](@oritech:fragment_forge_block)（即 `oritech:grinder` 类型）、
+[铸造器](@oritech:foundry_block)、[离心机](@oritech:centrifuge_block)、
+[精炼厂](@oritech:refinery_block)、[组装机](@oritech:assembler_block)、
+[原子锻造机](@oritech:atomic_forge_block)、[动力熔炉](@oritech:powered_furnace_block)、
+[冷却器](@oritech:cooler_block)，以及
+[燃料发电机](@oritech:fuel_generator_block)与[生物发电机](@oritech:bio_generator_block)。
+
+发电机在开始燃烧一批燃料时会从对应槽位取走指定数量，因此发电机配方同样可以一次要求多个物品。

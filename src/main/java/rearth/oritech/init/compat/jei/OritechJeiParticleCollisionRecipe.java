@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import rearth.oritech.init.BlockContent;
 import rearth.oritech.init.recipes.OritechRecipe;
+import rearth.oritech.util.SizedIngredient;
 import rearth.oritech.init.recipes.OritechRecipeType;
 import rearth.oritech.init.recipes.RecipeContent;
 
@@ -76,8 +77,14 @@ public class OritechJeiParticleCollisionRecipe implements IRecipeCategory<Oritec
         
         var inputs = recipe.getInputs();
         
-        builder.addInputSlot(25, 10).addIngredients(inputs.get(0)).setBackground(background, -1, -1);
-        builder.addInputSlot(25, 33).addIngredients(inputs.get(1)).setBackground(background, -1, -1);
+        builder.addInputSlot(25, 10).addItemStacks(sizedStacks(inputs.get(0))).setBackground(background, -1, -1);
+        builder.addInputSlot(25, 33).addItemStacks(sizedStacks(inputs.get(1))).setBackground(background, -1, -1);
         builder.addOutputSlot(90, 24).addItemStack(recipe.getResults().get(0)).setBackground(background, -1, -1);
+    }
+
+    private static java.util.List<net.minecraft.world.item.ItemStack> sizedStacks(SizedIngredient ingredient) {
+        return java.util.Arrays.stream(ingredient.ingredient().getItems())
+                 .map(stack -> stack.copyWithCount(ingredient.count()))
+                 .toList();
     }
 }

@@ -21,7 +21,7 @@ public class OritechEMIParticleCollisionRecipe extends BasicEmiRecipe {
         super(category, entry.id(), 160, 60);
         
         recipe = entry.value();
-        recipe.getInputs().forEach(ingredient -> this.inputs.add(EmiIngredient.of(ingredient)));
+        recipe.getInputs().forEach(ingredient -> this.inputs.add(EmiIngredient.of(ingredient.ingredient(), ingredient.count())));
         recipe.getResults().forEach(stack -> this.outputs.add(EmiStack.of(stack)));
     }
     

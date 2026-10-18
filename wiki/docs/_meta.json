@@ -1,10 +1,11 @@
 {
   "getting_started": {
-    "name": "\uD83D\uDCD5 Getting Started",
+    "name": "📕 Getting Started",
     "icon": null
   },
   "multiblocks.mdx": "Multiblocks",
   "addons.mdx": "Addons",
+  "custom_recipes.mdx": "Custom Machine Recipes",
   "particle_accelerator.mdx": "Particle Accelerator",
   "reactor": {
     "name": "☢ Fission Reactors",
